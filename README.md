@@ -84,7 +84,7 @@ Rascaf_join will output the scaffolds in the file '$prefix.fa' (default: "rascaf
 
 More specifically, the scaffolds info file will have one line for each output scaffold: 
 
->out_scaff_id (contig_id1 orig_scaff_id1 contig_ori1) ... (contig_idN orig_scaff_idN contig_oriN)
+\>out_scaff_id (contig_id1 orig_scaff_id1 contig_ori1) ... (contig_idN orig_scaff_idN contig_oriN)
 ...
 where:
     out_scaff_id  - ID of output scaffold
