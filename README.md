@@ -60,19 +60,19 @@ Rascaf will output a list of contig connections determined from the RNA-seq data
 
 Each contig connection is recorded into a connection block:
 
-N: (scaff_id1 contig_len1 contig_id1 contig_ori1) ... (scaff_idN contig_lenN contig_idN contig_oriN)
-    M: (scaff_id1:start1-end1) (scaff_id2:start2-end2)        # pairwise connections 1 .. N-1
-    ....
-where:
-   scaff_id, contig_len, contig_id, contig_ori - scaffold ID, etc.
-   N  -  number of contigs being connected
-   M  -  number of read alignments supporting the connection
-   start, end - coordinates of the gene block within the scaffold
+	N: (scaff_id1 contig_len1 contig_id1 contig_ori1) ... (scaff_idN contig_lenN contig_idN contig_oriN)
+	    M: (scaff_id1:start1-end1) (scaff_id2:start2-end2)        # pairwise connections 1 .. N-1
+	    ....
+	where:
+	   scaff_id, contig_len, contig_id, contig_ori - scaffold ID, etc.
+	   N  -  number of contigs being connected
+	   M  -  number of read alignments supporting the connection
+	   start, end - coordinates of the gene block within the scaffold
 
 Example of connection between two scaffolds:  
 
-2: (scaffold00015 963557 219 +) (scaffold01887 956 115731 -)
-    23: (scaffold00015:332817-333132) (scaffold01887:76-854)
+	2: (scaffold00015 963557 219 +) (scaffold01887 956 115731 -)
+	    23: (scaffold00015:332817-333132) (scaffold01887:76-854)
 
 The list of connections may be preceded in the file by a number of messages regarding likely errors detected in the raw assembly, and may be followed by one or several warnings on the newly identified contig connections.
 
@@ -84,14 +84,14 @@ Rascaf_join will output the scaffolds in the file '$prefix.fa' (default: "rascaf
 
 More specifically, the scaffolds info file will have one line for each output scaffold: 
 
-\>out_scaff_id (contig_id1 orig_scaff_id1 contig_ori1) ... (contig_idN orig_scaff_idN contig_oriN)
-...
-where:
-    out_scaff_id  - ID of output scaffold
-    contig_id1  - ID of first contig in the output scaffold
-    orig_scaff_1 - ID of original scaffold containing contig_id1
-    contig_ori1 - orientation of contid_id1 in the output scaffold 
-    ...
+	\>out_scaff_id (contig_id1 orig_scaff_id1 contig_ori1) ... (contig_idN orig_scaff_idN contig_oriN)
+	...
+	where:
+	    out_scaff_id  - ID of output scaffold
+	    contig_id1  - ID of first contig in the output scaffold
+	    orig_scaff_1 - ID of original scaffold containing contig_id1
+	    contig_ori1 - orientation of contid_id1 in the output scaffold 
+	...
 
 ### Example
 
