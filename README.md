@@ -91,7 +91,6 @@ More specifically, the scaffolds info file will have one line for each output sc
 	    contig_id1  - ID of first contig in the output scaffold
 	    orig_scaff_1 - ID of original scaffold containing contig_id1
 	    contig_ori1 - orientation of contid_id1 in the output scaffold 
-	...
 
 ### Example
 
