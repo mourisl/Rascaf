@@ -18,7 +18,8 @@ Rascaf (RnA-seq SCAFfolder) uses continuity and order information from paired-en
 ### Install
 
 1. Clone the [GitHub repo](https://github.com/mourisl/rascaf), e.g. with `git clone https://github.com/mourisl/rascaf.git`
-2. Run `make` in the repo directory
+
+So far, we do not provide source code. You can directly use the pre-compiled binary files on Linux machine.
 
 ### Usage
 Rascaf is comprised of two executable files, "rascaf" and "rascaf_join". "rascaf" identifies the connections from a single RNA-seq data set. "rascaf_join" uses the connections found by "rascaf" to build the scaffolds and, if applicable, to combine different data sets.
