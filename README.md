@@ -22,7 +22,7 @@ Rascaf (RnA-seq SCAFfolder) uses continuity and order information from paired-en
 So far, we do not provide source code. You can directly use the pre-compiled binary files on Linux machine.
 
 ### Usage
-Rascaf is comprised of two executable files, "rascaf" and "rascaf_join". "rascaf" identifies the connections from a single RNA-seq data set. "rascaf_join" uses the connections found by "rascaf" to build the scaffolds and, if applicable, to combine different data sets.
+Rascaf is comprised of two executable files, "rascaf" and "rascaf-join". "rascaf" identifies the connections from a single RNA-seq data set. "rascaf-join" uses the connections found by "rascaf" to build the scaffolds and, if applicable, to combine different data sets.
 
 For "rascaf":    
 
@@ -41,9 +41,9 @@ For "rascaf":
 		-v : verbose mode (default: false)
 
 
-For "rascaf_join":
+For "rascaf-join":
 
-	Usage: ./rascaf_join [OPTIONS]
+	Usage: ./rascaf-join [OPTIONS]
 	OPTIONS:
 	Required:
 		-r STRING: path to the rascaf connection file. Can use multiple -r to specify multiple connection files 
@@ -56,7 +56,7 @@ For "rascaf_join":
 
 1. For "rascaf":
 
-Rascaf will output a list of contig connections determined from the RNA-seq data into a file '$prefix.out' (default: "rascaf.out"). This file is recognized and handled automatically by the downstream analysis software ("rascaf_join"); details below are provided for debugging purposes:
+Rascaf will output a list of contig connections determined from the RNA-seq data into a file '$prefix.out' (default: "rascaf.out"). This file is recognized and handled automatically by the downstream analysis software ("rascaf-join"); details below are provided for debugging purposes:
 
 Each contig connection is recorded into a connection block:
 
@@ -76,9 +76,9 @@ Example of connection between two scaffolds:
 
 The list of connections may be preceded in the file by a number of messages regarding likely errors detected in the raw assembly, and may be followed by one or several warnings on the newly identified contig connections.
 
-NOTE: If desired, the user can manually edit the connections in "rascaf.out" to filter weakly supported or unwanted connections before running "rascaf_join".
+NOTE: If desired, the user can manually edit the connections in "rascaf.out" to filter weakly supported or unwanted connections before running "rascaf-join".
 
-2. For "rascaf_join":
+2. For "rascaf-join":
 
 Rascaf_join will output the scaffolds in the file '$prefix.fa' (default: "rascaf_scaffold.fa"), along with reports on how the new scaffolds are built from the contigs in the original draft assembly (file '$prefix.info' file).
 
@@ -98,7 +98,7 @@ Suppose we have two sorted BAM files from two RNA-seq data sets, A.bam and B.bam
 
 	>./rascaf -b A.bam -f assembly.fa -o A
 	>./rascaf -b B.bam -f assembly.fa -o B
-	>./rascaf_join -r A.out -r B.out -o assembly_scaffold
+	>./rascaf-join -r A.out -r B.out -o assembly_scaffold
 
 The new scaffolds can be found in the "assembly_scaffold.fa" file.
 
