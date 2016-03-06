@@ -101,7 +101,12 @@ Suppose we have two sorted BAM files from two RNA-seq data sets, A.bam and B.bam
 
 The new scaffolds can be found in the "assembly_scaffold.fa" file.
 
-We provide a sample bam file and assembly file in "sample" sub-directory. You could see the connection between chr20_10 and chr20_11 from the result of Rascaf.
+We provide a sample bam file and assembly file in "sample" sub-directory. 
+
+	>./rascaf -b sample/sample.bam -f sample/sample.fa
+	>./rascaf-join -r rascaf.out -o sample
+
+You could see the connection between chr20_10 and chr20_11 from rascaf.out or sample.info. And the scaffolded sequence is in sample.fa
 
 ### Terms of use
 
