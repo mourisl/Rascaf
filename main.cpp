@@ -193,7 +193,7 @@ int main( int argc, char *argv[] )
 	
 	// Output the command line
 	fprintf( fpOut, "command line: " ) ;
-	char fullpath[513] ;
+	char *fullpath = (char *)malloc( sizeof( char ) * 4096 ) ;
 	for ( i = 0 ; i < argc ; ++i )
 	{
 		char c = ' ' ;
@@ -201,18 +201,26 @@ int main( int argc, char *argv[] )
 			c = '\n' ;
 		if ( i > 0 && !strcmp( argv[i - 1], "-b" ) )
 		{
-			realpath( argv[i], fullpath ) ;
+			if ( realpath( argv[i], fullpath ) == NULL )
+			{
+				fprintf( stderr, "Failed to resolve the path of file %s.\n", argv[i] ) ;
+				exit( 1 ) ;
+			}
 			fprintf( fpOut, "%s%c", fullpath, c ) ;
 		}
 		else if ( i > 0 && !strcmp( argv[i - 1], "-f" ) )
 		{
-			realpath( argv[i], fullpath ) ;
+			if ( realpath( argv[i], fullpath ) == NULL )
+			{
+				fprintf( stderr, "Failed to resolve the path of file %s.\n", argv[i] ) ;
+				exit( 1 ) ;
+			}
 			fprintf( fpOut, "%s%c", fullpath, c ) ;
 		}
 		else
 			fprintf( fpOut, "%s%c", argv[i], c ) ;
 	}
-
+	free( fullpath ) ;
 	scaffold.Output( fpOut, alignments ) ;
 	return 0 ;
 }
