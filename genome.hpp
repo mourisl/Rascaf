@@ -208,10 +208,12 @@ public:
 				
 				if ( (int)genomes.size() <= chrId )
 				{
-					while ( (int)genomes.size() < chrId )
+					int size = genomes.size() ;
+					while ( size < chrId )
 					{
-						BitSequence bs( 0 ) ;
+						BitSequence bs( alignments.GetChromLength( size ) ) ;
 						genomes.push_back( bs ) ;
+						++size ;
 					}
 					//printf( "%d %s %d\n", chrId, alignments.GetChromName( chrId ), alignments.GetChromLength( chrId ) ) ;
 
