@@ -19,6 +19,7 @@
 extern char nucToNum[26] ;
 extern char numToNuc[26] ;
 extern bool VERBOSE ;
+extern int breakN ;
 extern FILE *fpOut ;
 
 struct _contig
@@ -157,11 +158,13 @@ public:
 		std::string s( "" ) ;
 
 		struct _contig tmpContig ;
+		struct _contig tmpGap ;
 		struct _pair tmpContigRange ;
 		int64_t offset = 0 ;
 
 		tmpContig.start = -1 ;
 		tmpContigRange.a = 0 ;
+		tmpGap.start = -1 ;
 		while ( getline( fp, line ) )
 		{
 			/*std::cout<<line<<"\n" ;
@@ -172,7 +175,11 @@ public:
 				//printf( "%d\n", alignments.GetChromIdFromName( "chr20_1" ) ) ;
 				if ( tmpContig.start != -1 )
 				{
-					tmpContig.end = offset - 1 ;
+					if ( tmpGap.start != -1 )
+						tmpContig.end = tmpGap.start - 1 ;
+					else
+						tmpContig.end = offset - 1 ;
+					
 					tmpContig.id = contigs.size() ;
 					contigs.push_back( tmpContig ) ;
 					
@@ -231,6 +238,7 @@ public:
 
 				tmpContig.chrId = chrId ;
 				tmpContig.start = -1 ;
+				tmpGap.start = -1 ;
 				offset = 0 ;
 			}
 			else
@@ -249,7 +257,7 @@ public:
 
 						if ( line[i] == 'n' || line[i] == 'N' )
 						{
-							if ( tmpContig.start != -1 )
+							/*if ( tmpContig.start != -1 )
 							{
 								tmpContig.end = offset - 1 ;
 								tmpContig.id = contigs.size() ;
@@ -257,10 +265,37 @@ public:
 								//printf( "(%d %d)\n", (int)tmpContig.start, (int)tmpContig.end ) ;
 
 								tmpContig.start = -1 ;
+							}*/
+
+
+							if ( tmpGap.start == -1 )
+							{
+								tmpGap.start = offset ;
+								tmpGap.end = offset ;
+							}
+							else
+							{
+								++tmpGap.end ;
 							}
 						}
 						else
 						{
+							if ( tmpGap.start != -1 )
+							{
+								if ( tmpGap.end - tmpGap.start + 1 >= breakN )
+								{
+									if ( tmpContig.start != -1 )
+									{
+										tmpContig.end = tmpGap.start - 1 ;
+										tmpContig.id = contigs.size() ;
+										contigs.push_back( tmpContig ) ;
+										//printf( "(%d %d)\n", (int)tmpContig.start, (int)tmpContig.end ) ;
+										//fprintf( stdout, "%s %"PRId64" %"PRId64"\n", alignments.GetChromName( tmpContig.chrId ), tmpContig.start, tmpContig.end ) ;	
+										tmpContig.start = -1 ;
+									}
+								}
+								tmpGap.start = -1 ;
+							}
 							if ( tmpContig.start == -1 )
 							{
 								tmpContig.start = offset ;
@@ -274,11 +309,15 @@ public:
 		}
 
 		if ( tmpContig.start != -1 )
-		{
-			tmpContig.end = offset - 1 ;
+		{	
+			if ( tmpGap.start != -1 )
+				tmpContig.end = tmpGap.start - 1 ;
+			else
+				tmpContig.end = offset - 1 ;
 			tmpContig.id = contigs.size() ;
 			contigs.push_back( tmpContig ) ;
 
+			//fprintf( stdout, "%s %"PRId64" %"PRId64"\n", alignments.GetChromName( tmpContig.chrId ), tmpContig.start, tmpContig.end ) ;	
 			tmpContig.start = -1 ;
 		}
 
@@ -446,6 +485,8 @@ public:
 	// The function handle kmers========================================================
 	void AddKmer( int chrId, int from, int to, int kl, std::map<uint64_t, int> &kmers ) 
 	{
+		if ( kl <= 0 )
+			return ;
 		KmerCode code( kl ) ;
 		int i ;
 		BitSequence &s = genomes[chrId] ;
@@ -478,8 +519,56 @@ public:
 		}
 	}
 
+	int GetKmerCoverage( int chrId, int from, int to, int kl, std::map<uint64_t, int> &kmers )
+	{
+		if ( kl <= 0 || to - from + 1 < kl )
+			return 0 ;
+		KmerCode code( kl ) ;
+		int i ;
+		BitSequence &s = genomes[chrId] ;
+		for ( i = from ; i < from + kl - 1 ; ++i )
+		{
+			//std::cout<<s.Get(i)<<"\n" ;
+			code.Append( s.Get( i ) ) ;
+		}
+		int prevHit = -2 * kl ;
+		int ret = 0 ;
+
+		for ( ; i <= to ; ++i )
+		{
+			if ( code.IsValid() )
+			{
+				uint64_t key = code.GetCanonicalKmerCode() ;
+				if ( kmers.count( key ) > 0 )
+				{
+					if ( i <= prevHit + kl - 1 )
+						ret += i - prevHit ;
+					else
+						ret += kl ;
+					prevHit = i ;
+				}
+			}
+			code.Append( s.Get( i ) ) ;
+		}
+		if ( code.IsValid() )
+		{
+			uint64_t key = code.GetCanonicalKmerCode() ;
+			if ( kmers.count( key ) > 0 )
+			{
+				if ( i <= prevHit + kl - 1 )
+					ret += i - prevHit ;
+				else
+					ret += kl ;
+				prevHit = i ;
+			}
+		}
+		return ret ;
+	}
+
 	int CountStoredKmer( int chrId, int from, int to, int kl, std::map<uint64_t, int> &kmers, bool test = false )
 	{
+		if ( kl <= 0 )
+			return 0 ;
 		KmerCode code( kl ) ;
 		int i ;
 		int ret = 0 ;

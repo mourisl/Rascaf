@@ -55,6 +55,63 @@ private:
 		}
 		return false ;
 	}
+	
+	// Search a cycle whose dummy type's number is different.
+	// The shape would look like
+	//     O=O
+	//    / \ 
+	//  O=O--O=O
+	bool SearchTriangularCycle( int node, int dummy, int startNode, int startDummy, int depth, int dummyCnt[2],
+		std::vector<int> &cycleNodes, int time, int visitTime[] )
+	{
+		if ( visitTime[node] == time )	
+			return false ;
+		visitTime[node] = time ;
+		int p = contigGraph[ node ].next ;
+		while ( p != -1 )
+		{
+			if ( contigGraph[p].u != node )
+			{
+				p = contigGraph[p].next ;
+				continue ;
+			}
+			int newCnt[2] ;
+			newCnt[0] = dummyCnt[0] ;
+			newCnt[1] = dummyCnt[1] ;
+			if ( contigGraph[p].dummyU != dummy )
+			{
+				++newCnt[0] ;
+				++newCnt[1] ;
+			}
+			else
+			{
+				++newCnt[ contigGraph[p].dummyU ] ;
+			}
+			/*if ( startNode == 30480 )
+			{
+				printf( "dummyCnt: (%d %d)=>(%d %d) %d %d\n", node, dummy, contigGraph[p].v, contigGraph[p].dummyV, newCnt[0], newCnt[1] ) ;
+			}*/
+
+			if ( contigGraph[p].v == startNode && contigGraph[p].dummyV == startDummy && depth > 1 )
+			{
+				if ( newCnt[0] != newCnt[1] )
+				{
+					//printf( "dummyCnt: %d %d %d %d\n", node, dummy, newCnt[0], newCnt[1] ) ;
+					cycleNodes.push_back( node ) ;
+					return true ;
+				}
+			}
+				
+			if ( SearchTriangularCycle( contigGraph[p].v, contigGraph[p].dummyV, startNode, startDummy, depth + 1, newCnt, cycleNodes, time, visitTime ) )
+			{
+				cycleNodes.push_back( node ) ;
+				return true ;
+			}
+			p = contigGraph[p].next ;
+		}
+		return false ;
+	}
+
 	struct _contigGraphEdge *contigGraph ; // Use adjacent list to represent the graph
 public:
 
@@ -151,13 +208,22 @@ public:
 
 	bool IsInCycle( int node, std::vector<int> &cycleNodes, int visitTime[] )
 	{
+		int dummyCnt[2] ;
 		cycleNodes.clear() ;
-		if ( SearchCycle( node, 0, node, cycleNodes, 2 * node, visitTime ) )
+		if ( SearchCycle( node, 0, node, cycleNodes, 4 * node, visitTime ) )
 			return true ;
 		cycleNodes.clear() ;
-		if ( SearchCycle( node, 1, node, cycleNodes, 2 * node + 1, visitTime ) )
+		if ( SearchCycle( node, 1, node, cycleNodes, 4 * node + 1, visitTime ) )
 			return true ;
-		
+
+		cycleNodes.clear() ;
+		dummyCnt[0] = dummyCnt[1] = 0 ;
+		if ( SearchTriangularCycle( node, 0, node, 0, 0, dummyCnt, cycleNodes, 4 * node + 2, visitTime ) )
+			return true ;
+		cycleNodes.clear() ;
+		dummyCnt[0] = dummyCnt[1] = 0 ;
+		if ( SearchTriangularCycle( node, 1, node, 1, 0, dummyCnt, cycleNodes, 4 * node + 3, visitTime ) )
+			return true ;
 		return false ;
 	}
 	

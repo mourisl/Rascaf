@@ -19,7 +19,8 @@ char usage[] = "usage: a.out [options]\n"
 	       "\t-bc STRING: the path to the alignment BAM file allowing clipping from non-spliced aligner (default: not used)\n"
 	       "\t-ms INT: minimum support for connecting two contigs(default: 2)\n"
 	       "\t-ml INT: minimum exonic length(default: 200)\n"
-	       "\t-k INT: the size of a kmer(<=32. default: 21)\n"
+	       "\t-breakN INT: the least number of Ns to break a scaffold in the raw assembly(default: 1)\n"
+	       "\t-k INT: the size of a kmer(<=32; <=0 if you do not want to use kmer. default: 32)\n"
 	       "\t-cs : output the genomic sequence involved in connections in file $prefix_cs.fa (default: not used)\n"
 	       //"\t-aggressive: make connection decisions more aggressively, may introduce much more misassemblies. (default: not used)\n"
 	       "\t-v : verbose mode (default: false)\n" ;
@@ -32,6 +33,7 @@ bool aggressiveMode ;
 char *prefix ;
 bool VERBOSE ;
 FILE *fpOut ;
+int breakN ;
 
 int main( int argc, char *argv[] )
 {
@@ -52,7 +54,8 @@ int main( int argc, char *argv[] )
 
 	minimumSupport = 2 ;
 	minimumEffectiveLength = 200 ;
-	kmerSize = 21 ;
+	kmerSize = 32 ;
+	breakN = 1 ;
 	prefix = NULL ;
 	VERBOSE = false ;
 	outputConnectionSequence = false ;
@@ -88,6 +91,11 @@ int main( int argc, char *argv[] )
 		else if ( !strcmp( "-k", argv[i] ) )
 		{
 			kmerSize = atoi( argv[i + 1] ) ;
+			++i ;
+		}
+		else if ( !strcmp( "-breakN", argv[i] ) )
+		{
+			breakN = atoi( argv[i + 1] ) ;
 			++i ;
 		}
 		else if ( !strcmp( "-v", argv[i] ) )

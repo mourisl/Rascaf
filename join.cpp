@@ -24,6 +24,7 @@ int minSupport = 2 ;
 bool ignoreGap = false ; // if ignore gaps, then we will ignore the gap size, which will be aggressive
 FILE *fpOut = NULL ;
 int MAX_NEIGHBOR ;
+int breakN ;
 
 struct _part
 {
@@ -124,7 +125,13 @@ void ForwardSearch( int u, int inDummy, int time, int *visitTime, int *counter, 
 	
 	ncnt = contigGraph.GetNeighbors( u, 1 - inDummy, buffer, MAX_NEIGHBOR ) ;
 	for ( i = 0 ; i < ncnt ; ++i )
+	{
+		/*if ( time == 639 )
+		{
+			printf( "forwardsearch: (%d %d)=>(%d %d)\n", u, 1 - inDummy, buffer[i].a, buffer[i].b ) ;
+		}*/
 		ForwardSearch( buffer[i].a, buffer[i].b, time, visitTime, counter, contigGraph ) ;	
+	}
 	delete[] buffer ;
 }
 
@@ -152,7 +159,7 @@ void BackwardSearch( int u, int inDummy, int time, int *visitTime, int *counter,
 }
 
 // Search one dangling paths
-void SearchDangling( int u, int inDummy, bool *used, int time, int *visitTime, ContigGraph &contigGraph, bool add, int chosenNodes[], int chosenDummyNodes[], int &chosenCnt )
+void SearchDangling( int u, int inDummy, bool *used, int time, int *visitTime, ContigGraph &contigGraph, bool add, int chosenNodes[], int chosenDummyNodes[], int &chosenCnt, Genome &genome )
 {
 	//if ( u == 10 )
 	//	printf( "hi\n" ) ;
@@ -174,6 +181,30 @@ void SearchDangling( int u, int inDummy, bool *used, int time, int *visitTime, C
 	bool newAdd = true ;
 	//if ( u == 10 )
 	//	printf( "hi3 %d %d\n", ncnt, 1 - inDummy ) ;
+	
+	// Firstly, bias towards a connection onto another scaffold
+	for ( i = 0 ; i < ncnt ; ++i )		
+	{
+		if ( used[ neighbors[i].a ] )
+			continue ;
+		if ( genome.GetChrIdFromContigId( u ) != genome.GetChrIdFromContigId( neighbors[i].a ) ) 
+		{
+			SearchDangling( neighbors[i].a, neighbors[i].b, used, time, visitTime, 
+				contigGraph, newAdd, chosenNodes, chosenDummyNodes, chosenCnt, genome ) ;
+			newAdd = false ;
+		}
+	}
+
+	// Lastly, bias towards the closest contig in the raw assembly, since we know the connections are on the same scaffold
+	int direction ;
+	if ( inDummy == 1 )
+		direction = -1 ;
+	else
+		direction = 1 ;
+
+	int min = genome.GetContigCount() + 1 ;
+	int mintag = -1 ;
+
 	for ( i = 0 ; i < ncnt ; ++i )
 	{
 		//if ( u == 10 )
@@ -182,7 +213,20 @@ void SearchDangling( int u, int inDummy, bool *used, int time, int *visitTime, C
 			continue ;
 		//if ( u == 34674 && neighbors[i].a == 144159 )
 		//	printf( "hi\n" ) ;
-		SearchDangling( neighbors[i].a, neighbors[i].b, used, time, visitTime, contigGraph, newAdd, chosenNodes, chosenDummyNodes, chosenCnt ) ;
+		//SearchDangling( neighbors[i].a, neighbors[i].b, used, time, visitTime, contigGraph, newAdd, chosenNodes, chosenDummyNodes, chosenCnt, genome ) ;
+		//newAdd = false ;
+		int tmp = direction * ( neighbors[i].a - u ) ;
+		if ( tmp < min )
+		{
+			min = tmp ;
+			mintag = i ;
+		}
+	}
+
+	if ( mintag != -1 )
+	{
+		SearchDangling( neighbors[ mintag ].a, neighbors[ mintag ].b, used, time, visitTime, 
+			contigGraph, newAdd, chosenNodes, chosenDummyNodes, chosenCnt, genome ) ;
 		newAdd = false ;
 	}
 	delete[] neighbors ;
@@ -202,6 +246,8 @@ int main( int argc, char *argv[] )
 	int i ;
 	FILE *outputFile ;
 	FILE *infoFile ;
+
+	breakN = 1 ;
 
 	if ( argc < 2 )
 	{
@@ -281,6 +327,15 @@ int main( int argc, char *argv[] )
 			buffer[i] = '\0' ;
 			fprintf( stderr, "Found raw assembly file: %s\n", buffer ) ;
 			genome.Open( alignments, buffer ) ;
+
+			p = strstr( line, "-breakN" ) ;
+			p += 2 ;
+			while ( *p == ' ' )
+				++p ;
+			for ( i = 0 ; *p && *p != ' ' ; ++p, ++i )
+				buffer[i] = *p ;
+			buffer[i] = '\0' ;
+			breakN = atoi( buffer ) ;
 
 			break ;
 		}
@@ -408,11 +463,15 @@ int main( int argc, char *argv[] )
 		if ( contigGraph.IsInCycle( i, cycleNodes, visitTime ) )	
 		{
 			int cnt = cycleNodes.size() ;
+			//printf( "===\n") ;
 			for ( int j = 0 ; j < cnt ; ++j )
+			{
+				//printf( "In cycle %d\n", cycleNodes[j] ) ;
 				isInCycle[ cycleNodes[j] ] = true ;
+			}
 		}
 	}
-
+	//exit( 1 ) ; 
 	// Remove the connected edges involving the nodes in the cycle
 	for ( i = 0 ; i < contigCnt ; ++i )
 	{
@@ -434,6 +493,7 @@ int main( int argc, char *argv[] )
 	}
 	delete[] isInCycle ;
 	//printf( "hi: %d %d\n", __LINE__, contigCnt ) ;
+	//printf( "%d %d\n", contigGraph.GetNeighbors( 15301, 0, neighbors, MAX_NEIGHBOR ), contigGraph.GetNeighbors( 15301, 1, neighbors, MAX_NEIGHBOR ) ) ;
 	// Sort the scaffolds from fasta file, so that longer scaffold come first
 	int scafCnt = genome.GetChrCount() ;
 	struct _pair *scafInfo = new struct _pair[scafCnt] ;
@@ -502,8 +562,8 @@ int main( int argc, char *argv[] )
 		chosenCnt = 0 ;
 		BackwardSearch( to, 1, i, visitTime, counter, contigGraph, chosen, chosenCnt ) ;
 
-		//printf( "%s %d (%d %d) %d\n", alignments.GetChromName( genome.GetChrIdFromContigId( scafInfo[i].a ) ), i, from, to, chosenCnt ) ;
-		/*if ( chosenCnt > 1 )
+		/*printf( "%s %d (%d %d) %d\n", alignments.GetChromName( genome.GetChrIdFromContigId( scafInfo[i].a ) ), i, from, to, chosenCnt ) ;
+		if ( chosenCnt > 1 )
 		{
 			printf( "=== " ) ;
 			for ( int j = 0 ; j < chosenCnt ; ++j )
@@ -514,21 +574,24 @@ int main( int argc, char *argv[] )
 		for ( int j = 0 ; j < chosenCnt ; ++j )
 		{
 			ncnt = contigGraph.GetNeighbors( chosen[j], 0, neighbors, MAX_NEIGHBOR ) ;
-			//printf( "%d %d: %d %d %d\n", j, ncnt, neighbors[0].a, visitTime[ neighbors[0].a ], 
+			//printf( "%d %d %d: %d %d %d\n", j, chosen[j], ncnt, neighbors[0].a, visitTime[ neighbors[0].a ], 
 			//	counter[neighbors[0].a ] ) ;
 			for ( int k = 0 ; k < ncnt ; ++k )
 			{
+				//if ( i == 639 )
+				//	printf( "Neighbor from 0 %d: %d %d\n", k, neighbors[k].a, neighbors[k].b ) ;
 				if ( visitTime[ neighbors[k].a ] == 2 * i + 1 && counter[neighbors[k].a ] == 2 )
 				{
 					subgraph.AddEdge( chosen[j], 0, neighbors[k].a, neighbors[k].b, true ) ;
 					//printf( "subgraph: (%d %d)=>(%d %d)\n", chosen[j], 0, neighbors[k].a, neighbors[k].b ) ;
-					
 				}
 			}
 
 			ncnt = contigGraph.GetNeighbors( chosen[j], 1, neighbors, MAX_NEIGHBOR ) ;
 			for ( int k = 0 ; k < ncnt ; ++k )
 			{
+				//if ( i == 639 )
+				//	printf( "Neighbor from 1 %d: %d %d\n", k, neighbors[k].a, neighbors[k].b ) ;
 				if ( visitTime[ neighbors[k].a ] == 2 * i + 1 && counter[neighbors[k].a ] == 2 )
 				{
 					subgraph.AddEdge( chosen[j], 1, neighbors[k].a, neighbors[k].b, true ) ;
@@ -536,7 +599,6 @@ int main( int argc, char *argv[] )
 				}
 			}
 		}
-		//printf( "hi\n" ) ;
 
 		// Initialize the degree counter
 		for ( int j = 0 ; j < chosenCnt ; ++j )
@@ -579,8 +641,9 @@ int main( int argc, char *argv[] )
 					{
 						scaffold.AddEdge( queue[ prevTag].a, 1 - queue[prevTag].b, queue[j].a, queue[j].b ) ;
 						nextAdd[ prevTag ] = j ;
-						
-						//printf( "(%d %d)=>(%d %d)\n", queue[ prevTag].a, 1 - queue[prevTag].b, queue[j].a, queue[j].b ) ;
+					
+						/*if ( i == 639 )
+							printf( "(%lld %lld)=>(%lld %lld)\n", queue[ prevTag].a, 1 - queue[prevTag].b, queue[j].a, queue[j].b ) ;*/
 					}
 					else
 						firstAdd = j ;
@@ -598,7 +661,8 @@ int main( int argc, char *argv[] )
 						isInQueue[ neighbors[k].a ] = true ;
 						queue[ tail ] = neighbors[k] ; // Interesting assignment, I think.
 						++tail ;
-						//printf( "pushed in queue: %d\n", neighbors[k].a ) ;
+						/*if ( i == 639 )
+							printf( "pushed in queue: %d\n", neighbors[k].a ) ;*/
 						// Put the consecutive contigs together.
 						struct _pair testNeighbors[ MAX_NEIGHBOR ] ;
 						struct _pair tag ;
@@ -621,7 +685,8 @@ int main( int argc, char *argv[] )
 							isInQueue[ testNeighbors[0].a ] = true ;
 							queue[tail] = testNeighbors[0] ;
 							++tail ;
-							//printf( "pushed in queue: %d\n", testNeighbors[0].a ) ;
+							/*if ( i == 639 )
+								printf( "pushed in queue: %d\n", testNeighbors[0].a ) ;*/
 							tag = testNeighbors[0] ;
 						}
 					}
@@ -631,14 +696,20 @@ int main( int argc, char *argv[] )
 			head = tailTag ;
 		}
 		// Remove the effect on the subgraph. 
+		/*if ( tail != chosenCnt )
+		{
+			printf( "WARNING: not matched\n" ) ;
+			exit( 1 ) ;
+		}*/
 		for ( int j = 0 ; j < tail ; ++j )
 		{
+			counter[ queue[j].a ] = -1 ;
 			subgraph.RemoveAdjacentEdges( queue[j].a ) ;
 			isInQueue[ queue[j].a ] = false ;
 		}
 		subgraph.ResetEdgeUsed() ;
 
-		// no point is pick
+		// no point is picked
 		if ( prevTag == -1 )
 		{
 			continue ;
@@ -666,7 +737,7 @@ int main( int argc, char *argv[] )
 			chosenCnt = 0 ;
 			//if ( queue[j].a == 306 )
 			//	printf( "Dummy: %d %d %d\n", j, queue[j].b, 1 - queue[j].b ) ;
-			SearchDangling( queue[j].a, queue[j].b, used, danglingTime, danglingVisitTime, contigGraph, false, chosen, chosenDummy, chosenCnt ) ;
+			SearchDangling( queue[j].a, queue[j].b, used, danglingTime, danglingVisitTime, contigGraph, false, chosen, chosenDummy, chosenCnt, genome ) ;
 			++danglingTime ;
 			int prevTag = prevAdd[j] ;
 			/*if ( queue[j].a == 34674 )
@@ -723,7 +794,7 @@ int main( int argc, char *argv[] )
 			//if ( j > 0 )
 			//	continue ;
 			chosenCnt = 0 ;
-			SearchDangling( queue[j].a, 1 - queue[j].b, used, danglingTime, danglingVisitTime, contigGraph, false, chosen, chosenDummy, chosenCnt ) ;
+			SearchDangling( queue[j].a, 1 - queue[j].b, used, danglingTime, danglingVisitTime, contigGraph, false, chosen, chosenDummy, chosenCnt, genome ) ;
 			++danglingTime ;
 
 			int prevTag = prevAdd[j] ;
