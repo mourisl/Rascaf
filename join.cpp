@@ -113,12 +113,13 @@ int AddConnection( char *s, Alignments &alignments, std::vector<struct _part> &p
 	return n ;
 }
 
-void ForwardSearch( int u, int inDummy, int time, int *visitTime, int *counter, ContigGraph &contigGraph )
+void ForwardSearch( int u, int inDummy, int time, int *visitTime, int *counter, int *visitDummy, ContigGraph &contigGraph )
 {
 	if ( visitTime[u] == 2 * time )
 		return ;
 	visitTime[u] = 2 * time ;
 	counter[u] = 1 ;
+	visitDummy[u] = inDummy ;
 	struct _pair *buffer = new struct _pair[ MAX_NEIGHBOR ] ;
 	int ncnt ;
 	int i ;
@@ -130,16 +131,16 @@ void ForwardSearch( int u, int inDummy, int time, int *visitTime, int *counter, 
 		{
 			printf( "forwardsearch: (%d %d)=>(%d %d)\n", u, 1 - inDummy, buffer[i].a, buffer[i].b ) ;
 		}*/
-		ForwardSearch( buffer[i].a, buffer[i].b, time, visitTime, counter, contigGraph ) ;	
+		ForwardSearch( buffer[i].a, buffer[i].b, time, visitTime, counter, visitDummy, contigGraph ) ;	
 	}
 	delete[] buffer ;
 }
 
-void BackwardSearch( int u, int inDummy, int time, int *visitTime, int *counter, ContigGraph &contigGraph, int chosenNodes[], int &chosenCnt )
+void BackwardSearch( int u, int inDummy, int time, int *visitTime, int *counter, int * visitDummy, ContigGraph &contigGraph, int chosenNodes[], int &chosenCnt )
 {
 	if ( visitTime[u] == 2 * time + 1 )
 		return ;
-	if ( visitTime[u] != 2 * time )
+	if ( visitTime[u] != 2 * time || visitDummy[u] == inDummy )
 		counter[u] = 0 ;
 	visitTime[u] = 2 * time + 1 ;
 	++counter[u] ;
@@ -154,7 +155,7 @@ void BackwardSearch( int u, int inDummy, int time, int *visitTime, int *counter,
 	
 	ncnt = contigGraph.GetNeighbors( u, 1 - inDummy, buffer, MAX_NEIGHBOR ) ;
 	for ( i = 0 ; i < ncnt ; ++i )
-		BackwardSearch( buffer[i].a, buffer[i].b, time, visitTime, counter, contigGraph, chosenNodes, chosenCnt ) ;	
+		BackwardSearch( buffer[i].a, buffer[i].b, time, visitTime, counter, visitDummy, contigGraph, chosenNodes, chosenCnt ) ;	
 	delete[] buffer ;
 }
 
@@ -301,13 +302,16 @@ int main( int argc, char *argv[] )
 			char buffer[512] ;
 
 			p = strstr( line, "-breakN" ) ;
-			p += 7 ;
-			while ( *p == ' ' )
-				++p ;
-			for ( i = 0 ; *p && *p != ' ' ; ++p, ++i )
-				buffer[i] = *p ;
-			buffer[i] = '\0' ;
-			breakN = atoi( buffer ) ;
+			if ( p != NULL )
+			{
+				p += 7 ;
+				while ( *p == ' ' )
+					++p ;
+				for ( i = 0 ; *p && *p != ' ' ; ++p, ++i )
+					buffer[i] = *p ;
+				buffer[i] = '\0' ;
+				breakN = atoi( buffer ) ;
+			}
 
 			p = strstr( line, "-b" ) ;
 			if ( p == NULL )
@@ -517,11 +521,13 @@ int main( int argc, char *argv[] )
 	int *degree = new int[2 *contigCnt] ;
 	int *danglingVisitTime = new int[contigCnt] ;
 	int *counter = new int[contigCnt] ;
+	int *visitDummy = new int[ contigCnt ] ;
 	int *buffer = new int[contigCnt] ;
 	bool *isInQueue = new bool[ contigCnt ] ;
 
 	memset( used, false, sizeof( bool ) * contigCnt ) ;
 	memset( visitTime, -1, sizeof( int ) * contigCnt ) ;	
+	memset( visitDummy, -1, sizeof( int ) * contigCnt ) ;	
 	memset( danglingVisitTime, -1, sizeof( int ) * contigCnt ) ;
 	memset( counter, -1, sizeof( int ) * contigCnt ) ;
 	memset( isInQueue, false, sizeof( bool ) * contigCnt ) ;
@@ -558,9 +564,9 @@ int main( int argc, char *argv[] )
 		int from, to ;
 		genome.GetChrContigRange( genome.GetChrIdFromContigId( scafInfo[i].a ), from, to ) ;
 		//printf( "%d: %d %d %d\n", i, scafInfo[i].b, from, to ) ;
-		ForwardSearch( from, 0, i, visitTime, counter, contigGraph ) ;
+		ForwardSearch( from, 0, i, visitTime, counter, visitDummy, contigGraph ) ;
 		chosenCnt = 0 ;
-		BackwardSearch( to, 1, i, visitTime, counter, contigGraph, chosen, chosenCnt ) ;
+		BackwardSearch( to, 1, i, visitTime, counter, visitDummy, contigGraph, chosen, chosenCnt ) ;
 
 		/*printf( "%s %d (%d %d) %d\n", alignments.GetChromName( genome.GetChrIdFromContigId( scafInfo[i].a ) ), i, from, to, chosenCnt ) ;
 		if ( chosenCnt > 1 )
@@ -703,6 +709,7 @@ int main( int argc, char *argv[] )
 		}*/
 		for ( int j = 0 ; j < tail ; ++j )
 		{
+			visitDummy[ queue[j].a ] = -1 ;
 			counter[ queue[j].a ] = -1 ;
 			subgraph.RemoveAdjacentEdges( queue[j].a ) ;
 			isInQueue[ queue[j].a ] = false ;
