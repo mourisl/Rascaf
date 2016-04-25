@@ -299,6 +299,16 @@ int main( int argc, char *argv[] )
 		{
 			char *p ;
 			char buffer[512] ;
+
+			p = strstr( line, "-breakN" ) ;
+			p += 7 ;
+			while ( *p == ' ' )
+				++p ;
+			for ( i = 0 ; *p && *p != ' ' ; ++p, ++i )
+				buffer[i] = *p ;
+			buffer[i] = '\0' ;
+			breakN = atoi( buffer ) ;
+
 			p = strstr( line, "-b" ) ;
 			if ( p == NULL )
 			{
@@ -327,21 +337,11 @@ int main( int argc, char *argv[] )
 			buffer[i] = '\0' ;
 			fprintf( stderr, "Found raw assembly file: %s\n", buffer ) ;
 			genome.Open( alignments, buffer ) ;
-
-			p = strstr( line, "-breakN" ) ;
-			p += 2 ;
-			while ( *p == ' ' )
-				++p ;
-			for ( i = 0 ; *p && *p != ' ' ; ++p, ++i )
-				buffer[i] = *p ;
-			buffer[i] = '\0' ;
-			breakN = atoi( buffer ) ;
-
+			
 			break ;
 		}
 	}
 	fclose( rascafFile ) ;
-
 	// Parse the input.
 	for ( unsigned int fid = 0 ; fid < rascafFileId.size() ; ++fid )
 	{
