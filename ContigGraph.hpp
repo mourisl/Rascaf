@@ -215,6 +215,7 @@ public:
 		cycleNodes.clear() ;
 		if ( SearchCycle( node, 1, node, cycleNodes, 4 * node + 1, visitTime ) )
 			return true ;
+		return false ;
 
 		cycleNodes.clear() ;
 		dummyCnt[0] = dummyCnt[1] = 0 ;
