@@ -47,6 +47,12 @@ struct _geneBlock
 	Support support ;
 } ;
 
+struct _cigar
+{
+	int len ;
+	char type ;
+} ;
+
 // a plain edge
 struct _edge
 {
@@ -1113,6 +1119,8 @@ class Blocks
 				int start = segments[0].a ;
 				bool isReverse = alignments.IsReverse() ;
 				bool reverseMateRole = false ; // triggered when letting the mate connect to the supplementary alignment
+				if ( segments[0].b - segments[0].a + 1 <= int( 1.5 * kmerSize ) ) 
+					continue ;
 
 				if ( tag < geneBlockCnt && alignments.GetChromId() != geneBlocks[tag].chrId )
 				{
@@ -1184,9 +1192,41 @@ class Blocks
 							if ( fragments[f].c_str()[0] == '\0' )
 								continue ;
 							Split( fragments[f].c_str(), ',', hit ) ;
+
+							const char *cigar = hit[3].c_str() ;
+							std::vector< struct _cigar > cigarSplit ;
+							int n = 0 ;
+							for ( i = 0 ; cigar[i] ; ++i )		
+							{
+								if ( cigar[i] >= '0' && cigar[i] <= '9' )
+								{
+									n = n * 10 + cigar[i] - '0' ;
+								}
+								else
+								{
+									struct _cigar c ;
+									c.len = n ;
+									c.type = cigar[i] ;
+									cigarSplit.push_back( c ) ;
+									n = 0 ;
+								}
+							}
+							int len = 0 ;
+							int size = cigarSplit.size() ;
+							for ( i = 0 ; i < size ; ++i )
+							{
+								if ( cigarSplit[i].type == 'M' || cigarSplit[i].type == 'D' )
+								{
+									len += cigarSplit[i].len ;
+								}
+							}
+							if ( len < int( 1.5 * kmerSize ) )
+								continue ;
+
 							int hChrId = alignments.GetChromIdFromName( hit[0].c_str() ) ;
 							int hPos = atoi( hit[1].c_str() ) ;
 							int gb = FindGeneBlock( hChrId, hPos ) ;
+
 							
 							if ( gb == -1 )
 								continue ;
@@ -1240,7 +1280,7 @@ class Blocks
 				if ( insert1 + insert2 <= fragLength + 2 * fragStd )
 				{
 					// Add or update the edge
-					/*if ( tagG == 1162 && k == 1165 )
+					/*if ( tagG == 1801 && k == 2338 )
 					  {
 					  printf( "%s\n", alignments.GetReadId() ) ;
 					  }*/
@@ -1530,6 +1570,9 @@ class Blocks
 					{
 						if ( max <= 0 || IsSignificantDifferent( max, fragLength - 2 * readLength, maxAll, fragLength - 2 * readLength ) )
 						{
+							max2 = max ;
+							max2tag = maxtag ;
+
 							max = maxAll ;
 							maxtag = maxAllTag ;
 						}

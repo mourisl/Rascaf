@@ -25,6 +25,7 @@ public:
 	{
 		uniqSupport = multiSupport = 0 ;
 		plusSupport = minusSupport = 0 ;
+		clipSupport = 0 ;
 		leftPos = rightPos = -1 ;
 		multiSupportCoefficient = 1.0 ;
 		nmSum = 0 ;
@@ -76,6 +77,8 @@ public:
 		minusSupport += in.minusSupport ;
 
 		nmSum += in.nmSum ;
+
+		clipSupport += in.clipSupport ;
 
 		if ( in.leftPos != -1 && ( leftPos == -1 || in.leftPos < leftPos ) )
 			leftPos = in.leftPos ;
@@ -145,6 +148,8 @@ public:
 		plusSupport = in.plusSupport ;
 		minusSupport = in.minusSupport ;
 		
+		clipSupport += in.clipSupport ;
+		
 		nmSum = in.nmSum ;
 		
 		leftPos = in.leftPos ;
@@ -160,6 +165,7 @@ public:
 	{
 		uniqSupport = multiSupport = 0 ;
 		plusSupport = minusSupport = 0 ;
+		clipSupport = 0 ;
 		nmSum = 0 ;
 		leftPos = rightPos = -1 ;
 		multiSupportCoefficient = 1.0 ;

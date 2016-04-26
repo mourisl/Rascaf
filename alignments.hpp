@@ -263,6 +263,8 @@ public:
 			if ( bam_aux2i( bam_aux_get( b, "NH" ) ) > 1 )
 				return false ;
 		}	
+		if ( allowSupplementary && GetFieldZ( "XA" ) != NULL )
+			return false ;
 		if ( IsSupplementary() && GetFieldZ( "XZ" ) != NULL )
 			return false ;
 		return true ;
