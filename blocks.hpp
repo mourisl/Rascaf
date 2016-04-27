@@ -1392,18 +1392,26 @@ class Blocks
 			{
 				int s = exonBlocks[ exonIds[i] ].start ;
 				int e = exonBlocks[ exonIds[i] ].end ;
-				if ( s <= start && e >= start )
+				if ( s <= start && end <= e )
 				{
-					ret += e - start + 1 ;
-				}
-				else if ( start <= s && end >= e )
-				{
-					ret += e - s + 1 ;
-				}
-				if ( s <= end && e >= end  )
-				{
-					ret += end - s + 1 ;
+					ret = end - start + 1 ;	
 					break ;
+				}
+				else
+				{
+					if ( s <= start && e >= start )
+					{
+						ret += e - start + 1 ;
+					}
+					else if ( start <= s && end >= e )
+					{
+						ret += e - s + 1 ;
+					}
+					else if ( s <= end && e >= end  )
+					{
+						ret += end - s + 1 ;
+						break ;
+					}
 				}
 			}
 			return ret ;
@@ -1570,11 +1578,14 @@ class Blocks
 					{
 						if ( max <= 0 || IsSignificantDifferent( max, fragLength - 2 * readLength, maxAll, fragLength - 2 * readLength ) )
 						{
-							max2 = max ;
-							max2tag = maxtag ;
+							if ( max <= 10 || max < minimumSupport || !geneBlockGraph[i][ maxtag ].support[ geneBlockGraph[i][maxtag].supportUse ].IsUnique() )
+							{
+								max2 = max ;
+								max2tag = maxtag ;
 
-							max = maxAll ;
-							maxtag = maxAllTag ;
+								max = maxAll ;
+								maxtag = maxAllTag ;
+							}
 						}
 					}
 					if ( max > 0 && max2 > 0 && ( !IsSignificantDifferent( max, fragLength - 2 * readLength, max2, fragLength - 2 * readLength )
@@ -1899,6 +1910,9 @@ class Blocks
 						int su = geneBlockGraph[i][j].supportUse ;
 						int span = GetGeneBlockEffectiveCoverage(i, geneBlockGraph[i][j].support[su].GetLeftMostPos() 
 								,geneBlockGraph[i][j].support[su].GetRightMostPos() ) + readLength - kmerSize + 1 ;
+						if ( span > leni )
+							span = leni ;
+
 						if ( ( kmerCoverage > int( 1.5 * kmerSize ) && ( !geneBlockGraph[i][j].support[ su ].IsUnique() ) ) || 
 							( kmerCoverage >= kmerSize + 2 && ( kmerCoverage > 0.1 * leni || kmerCoverage > 0.1 * lenj || kmerCoverage > 30 * span / readLength ) ) )
 						{
@@ -1906,7 +1920,7 @@ class Blocks
 						}
 #ifdef DEBUG
 						if ( i == DEBUG_U && geneBlockGraph[i][j].v == DEBUG_V )
-							printf( "7: %d: %d %d\n", valid, kmerCoverage, span ) ;
+							printf( "7: %d: kmerCoverage=%d leni=%d lenj=%d span=%d\n", valid, kmerCoverage, leni, lenj, span ) ;
 #endif
 					}
 
