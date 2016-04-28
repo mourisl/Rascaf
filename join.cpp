@@ -135,12 +135,11 @@ void ForwardSearch( int u, int inDummy, int time, int *visitTime, int *counter, 
 	}
 	delete[] buffer ;
 }
-
-void BackwardSearch( int u, int inDummy, int time, int *visitTime, int *counter, int * visitDummy, ContigGraph &contigGraph, int chosenNodes[], int &chosenCnt )
+void BackwardSearch( int u, int inDummy, int time, int *visitTime, int *counter, ContigGraph &contigGraph, int chosenNodes[], int &chosenCnt )
 {
 	if ( visitTime[u] == 2 * time + 1 )
 		return ;
-	if ( visitTime[u] != 2 * time || visitDummy[u] == inDummy )
+	if ( visitTime[u] != 2 * time )
 		counter[u] = 0 ;
 	visitTime[u] = 2 * time + 1 ;
 	++counter[u] ;
@@ -152,10 +151,32 @@ void BackwardSearch( int u, int inDummy, int time, int *visitTime, int *counter,
 	struct _pair *buffer = new struct _pair[ MAX_NEIGHBOR ];
 	int ncnt ;
 	int i ;
+	ncnt = contigGraph.GetNeighbors( u, 1 - inDummy, buffer, MAX_NEIGHBOR ) ;
+	for ( i = 0 ; i < ncnt ; ++i )
+		BackwardSearch( buffer[i].a, buffer[i].b, time, visitTime, counter, contigGraph, chosenNodes, chosenCnt ) ;
+	delete[] buffer ;
+}
+
+void BackwardSearchForTriangularCycle( int u, int inDummy, int time, int *visitTime, int *counter, int * visitDummy, ContigGraph &contigGraph, int chosenNodes[], int &chosenCnt )
+{
+	if ( visitTime[u] == 2 * time + 1 )
+		return ;
+	if ( visitTime[u] == 2 * time && visitDummy[u] == inDummy )
+	{
+		visitTime[u] = 2 * time + 1 ;
+		chosenNodes[ chosenCnt ] = u ;
+		++chosenCnt ;
+		return ;
+	}
+	visitTime[u] = 2 * time + 1 ;
+	
+	struct _pair *buffer = new struct _pair[ MAX_NEIGHBOR ];
+	int ncnt ;
+	int i ;
 	
 	ncnt = contigGraph.GetNeighbors( u, 1 - inDummy, buffer, MAX_NEIGHBOR ) ;
 	for ( i = 0 ; i < ncnt ; ++i )
-		BackwardSearch( buffer[i].a, buffer[i].b, time, visitTime, counter, visitDummy, contigGraph, chosenNodes, chosenCnt ) ;	
+		BackwardSearchForTriangularCycle( buffer[i].a, buffer[i].b, time, visitTime, counter, visitDummy, contigGraph, chosenNodes, chosenCnt ) ;	
 	delete[] buffer ;
 }
 
@@ -495,7 +516,7 @@ int main( int argc, char *argv[] )
 			}
 		}
 	}
-	delete[] isInCycle ;
+	//delete[] isInCycle ;
 	//printf( "hi: %d %d\n", __LINE__, contigCnt ) ;
 	//printf( "%d %d\n", contigGraph.GetNeighbors( 15301, 0, neighbors, MAX_NEIGHBOR ), contigGraph.GetNeighbors( 15301, 1, neighbors, MAX_NEIGHBOR ) ) ;
 	// Sort the scaffolds from fasta file, so that longer scaffold come first
@@ -524,6 +545,49 @@ int main( int argc, char *argv[] )
 	int *visitDummy = new int[ contigCnt ] ;
 	int *buffer = new int[contigCnt] ;
 	bool *isInQueue = new bool[ contigCnt ] ;
+	int *chosen = new int[contigCnt] ;
+	int chosenCnt ;
+
+	memset( isInCycle, false, sizeof( bool ) * contigCnt ) ;
+	memset( visitTime, -1, sizeof( int ) * contigCnt ) ;	
+	memset( visitDummy, -1, sizeof( int ) * contigCnt ) ;	
+	memset( counter, -1, sizeof( int ) * contigCnt ) ;
+
+	// Use those memory to remove triangular cycles
+	for ( i = 0 ; i < scafCnt ; ++i )
+	{
+		int from, to ;
+		genome.GetChrContigRange( genome.GetChrIdFromContigId( scafInfo[i].a ), from, to ) ;
+		ForwardSearch( from, 0, i, visitTime, counter, visitDummy, contigGraph ) ;
+		chosenCnt = 0 ;
+		BackwardSearchForTriangularCycle( to, 1, i, visitTime, counter, visitDummy, contigGraph, chosen, chosenCnt ) ;
+
+		for ( int j = 0 ; j < chosenCnt ; ++j )
+		{
+			//printf( "%d\n", chosen[j] ) ;
+			isInCycle[ chosen[j] ] = true ;
+		}
+	}
+
+	for ( i = 0 ; i < contigCnt ; ++i )
+	{
+		if ( isInCycle[i] )
+		{	
+			for ( int dummy = 0 ; dummy <= 1 ; ++dummy )
+			{
+				int ncnt = contigGraph.GetNeighbors( i, dummy, neighbors, MAX_NEIGHBOR ) ;
+				for ( int j = 0 ; j < ncnt ; ++j )
+				{
+					if ( neighbors[j].a == i + 2 * dummy - 1 && neighbors[j].b != dummy 
+						&& genome.GetChrIdFromContigId( i ) == genome.GetChrIdFromContigId( neighbors[j].a ) )
+						continue ; // the connection created by the raw assembly
+					else
+						contigGraph.RemoveEdge( i, dummy, neighbors[j].a, neighbors[j].b ) ;
+				}
+			}
+		}
+	}
+
 
 	memset( used, false, sizeof( bool ) * contigCnt ) ;
 	memset( visitTime, -1, sizeof( int ) * contigCnt ) ;	
@@ -551,8 +615,6 @@ int main( int argc, char *argv[] )
 	int ncnt ;
 	struct _pair *queue = new struct _pair[ contigCnt ] ;
 	int head = 0, tail ;
-	int *chosen = new int[contigCnt] ;
-	int chosenCnt ;
 	int danglingTime = 0 ;
 		
 	// Pre-allocate the subgraph.
@@ -566,7 +628,7 @@ int main( int argc, char *argv[] )
 		//printf( "%d: %d %d %d\n", i, scafInfo[i].b, from, to ) ;
 		ForwardSearch( from, 0, i, visitTime, counter, visitDummy, contigGraph ) ;
 		chosenCnt = 0 ;
-		BackwardSearch( to, 1, i, visitTime, counter, visitDummy, contigGraph, chosen, chosenCnt ) ;
+		BackwardSearch( to, 1, i, visitTime, counter, contigGraph, chosen, chosenCnt ) ;
 
 		/*printf( "%s %d (%d %d) %d\n", alignments.GetChromName( genome.GetChrIdFromContigId( scafInfo[i].a ) ), i, from, to, chosenCnt ) ;
 		if ( chosenCnt > 1 )
