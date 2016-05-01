@@ -10,8 +10,6 @@ private:
 	int uniqSupport ; 
 	int multiSupport ;
 
-	int plusSupport ;
-	int minusSupport ;
 
 	int clipSupport ;
 	int nmSum ;
@@ -20,7 +18,25 @@ private:
 	int64_t leftPos, rightPos ;
 	int coordCnt ; // Record how many coordinates showed up.
 	int64_t prevCoord ;
+		
+	bool IsSignificantDifferent( double a, double b )
+	{
+		if ( a - 6 * sqrt((double)a) <= b  
+				&& b <= a + 6 * sqrt( (double)a ) )
+		{
+			return false ;
+		}
+
+		if ( b - 6 * sqrt( (double)b ) <= a && a <= b + 6 * sqrt( (double)b ) )
+		{
+			return false ;
+		}
+
+		return true ;
+	}
 public:
+	double plusSupport ;
+	double minusSupport ;
 	Support()
 	{
 		uniqSupport = multiSupport = 0 ;
@@ -46,9 +62,9 @@ public:
 
 		int strand = align.GetStrand() ;
 		if ( strand == 1 )
-			++plusSupport ;
+			plusSupport += align.GetStrandWeight() ;
 		else if ( strand == -1 )
-			++minusSupport ;
+			minusSupport += align.GetStrandWeight() ;
 		int nm = align.GetFieldI( "NM" ) ;
 		if ( nm >= 0 )
 			nmSum += nm ;
@@ -59,7 +75,7 @@ public:
 				leftPos = align.segments[0].a ;
 			if ( align.segments[ align.segCnt - 1 ].b > rightPos )
 				rightPos = align.segments[ align.segCnt - 1 ].b ;
-			
+
 			if ( align.segments[0].a != prevCoord ) // This makes sense when the coordinates are sorted
 				++coordCnt ;
 			else if ( align.GetFieldZ( "SA" ) != NULL )
@@ -93,8 +109,10 @@ public:
 	{
 		if ( uniqSupport < 0.1 * ( uniqSupport + multiSupport ) || uniqSupport == 0 )
 			return false ;
-		if ( nmSum / ( uniqSupport + multiSupport ) >= 2.5 )
+		if ( nmSum / ( uniqSupport + multiSupport ) >= 2.5 ) //&& !IsUnique() )
 			return false ;
+		//else if ( nmSum / ( uniqSupport + multiSupport ) >= 3.5  )
+		//	return false ;
 		return true ;
 	}
 
@@ -117,12 +135,23 @@ public:
 
 	int GetStrand()
 	{
-		if ( plusSupport == minusSupport )
+		if ( !IsSignificantDifferent( plusSupport, minusSupport ) && plusSupport > 1 && minusSupport > 1 )
+			return 0 ;
+		else if ( plusSupport <= 1 && minusSupport <= 1 )
+			return 0 ;
+		else if ( plusSupport == minusSupport )
 			return 0 ;
 		else if ( plusSupport > minusSupport )
 			return 1 ;
 		else 
 			return -1 ;
+	}
+
+	bool HasStrandSupport()
+	{
+		if ( plusSupport >= minimumSupport || minusSupport >= minimumSupport )
+			return true ;
+		return false ;
 	}
 
 	int GetLeftMostPos()

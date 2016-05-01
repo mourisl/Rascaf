@@ -6,8 +6,8 @@
 
 
 //#define DEBUG
-#define DEBUG_U 2196
-#define DEBUG_V 2201
+#define DEBUG_U 42192 
+#define DEBUG_V 44780
 
 #include <stdlib.h> 
 #include <vector>
@@ -156,8 +156,8 @@ class Blocks
 				
 					if ( geneBlockGraph[u][j2].supportUse == su ) 
 						return j1 ;
-					else
-						return -1 ;
+					//else
+					//	return -1 ;
 				}
 			}
 
@@ -173,8 +173,8 @@ class Blocks
 				
 					if ( geneBlockGraph[u][j1].supportUse == su ) 
 						return j2 ;
-					else
-						return -1 ;
+					//else
+					//	return -1 ;
 				}
 			}
 			return -1 ;
@@ -213,6 +213,13 @@ class Blocks
 				{
 					//if ( i == 0 )
 					//	printf( "hi %d %d %d\n", i, segments[i].a, segments[i].b ) ;
+
+					// Set strand weight
+					if ( ( i == 0 && i < segCnt - 1 ) || ( i > 0 && i == segCnt - 1 ) )
+						alignments.SetStrandWeight( 1.0 / ( 2 * segCnt - 2 ) ) ;
+					else if ( i > 0 && i < segCnt == 1 )
+						alignments.SetStrandWeight( 1.0 / ( segCnt - 1 ) ) ;
+
 					for ( j = tag ; j < (int)exonBlocks.size() ; ++j )
 					{
 						if ( exonBlocks[j].end >= segments[i].a - 1 )
@@ -556,7 +563,7 @@ class Blocks
 		}
 
 
-		int BuildGeneBlocks( Alignments &alignments )
+		int BuildGeneBlocks( Alignments &alignments, Genome &genome )
 		{
 			int i, j, k ;
 			int exonBlockCnt = exonBlocks.size() ;
@@ -725,7 +732,7 @@ class Blocks
 						father[a] = b ;
 				}
 			}
-			//printf( "father: %d %d\n", GetFather( 19564, father) , GetFather( 19565, father ) ) ;
+			//printf( "father: %d %d\n", GetFather( 7343, father) , GetFather( 7344, father ),  ) ;
 			//filter out gene blocks.
 			// We do this in this stage because we will break the gene blocks
 			// when we actually build them due to interleaved genes.
@@ -777,8 +784,21 @@ class Blocks
 				if ( !validGeneBlock[ GetFather(i, father ) ] )
 					continue ;
 				// We split the cluster if the blocks are interleaved.
+				/*if ( i == 7344 )
+				{
+					printf( "%d: %d %d\n", i, GetFather( i, father ), currentFather ) ;
+				}*/
+				struct _contig prevCtg ;
+				if ( i > 0 )
+					prevCtg = genome.GetContigInfo( exonBlocks[i - 1].contigId ) ;
+				struct _contig ctg = genome.GetContigInfo( exonBlocks[i].contigId ) ;
 				if ( GetFather( i, father ) != currentFather || 
-						( i > 0 && exonBlocks[i].contigId != exonBlocks[i - 1].contigId ) )
+						( i > 0 && ctg.chrId != prevCtg.chrId ) ||
+						/*( i > 0 && exonBlocks[i].contigId != exonBlocks[i - 1].contigId && prevCtg.end - prevCtg.start + 1 >= minimumEffectiveLength && 
+								ctg.end - ctg.start + 1 >= minimumEffectiveLength && exonBlocks[i].end - exonBlocks[i - 1].start + 1 >= minimumEffectiveLength &&
+								exonBlocks[i].end - exonBlocks[i].start >= minimumEffectiveLength ) )*/
+						// The gap is much shorter than the read length which does not allow another contig to put between
+						( i > 0 && exonBlocks[i].contigId != exonBlocks[i - 1].contigId ) ) //&& ctg.start - prevCtg.end - 1 >= 5 ) ) 
 				{
 					// Create a new gene block
 					struct _geneBlock newBlock ;
@@ -847,7 +867,7 @@ class Blocks
 					for ( j = 0 ; j < size ; ++j )
 					{
 						int id = geneBlocks[i].exonBlockIds[j] ;
-						fprintf( fpOut, "\t%d: %"PRId64" %"PRId64"\n", j, exonBlocks[id].start + 1, exonBlocks[id].end + 1 ) ;
+						fprintf( fpOut, "\t%d %d: %"PRId64" %"PRId64"\n", j, id, exonBlocks[id].start + 1, exonBlocks[id].end + 1 ) ;
 					}
 				}
 			}
@@ -1470,7 +1490,7 @@ class Blocks
 							max2 = geneBlockGraph[i][j].support[k].GetCount() ;
 					}
 
-					if ( max2 > 0 && !IsSignificantDifferent( max, fragLength - 2 * readLength, max2, fragLength - 2 * readLength ) )
+					if ( ( max2 == 1 && max == 2 ) || ( max2 > 1 && !IsSignificantDifferent( max, fragLength - 2 * readLength, max2, fragLength - 2 * readLength ) ) )
 					{
 						maxtag = -1 ;
 					}	
@@ -1529,8 +1549,8 @@ class Blocks
 				{
 					int max = 0, max2 = 0 ;
 					bool valid = true ;
-					int maxtag = -1, max2tag ;
-					int maxAll = 0, maxAllTag ;
+					int maxtag = -1, max2tag = -1 ;
+					int maxAll = 0, maxAllTag = -1 ;
 					// Get the max from all the connection	
 					for ( j = 0 ; j < cnt ; ++j )
 					{
@@ -1588,6 +1608,20 @@ class Blocks
 							}
 						}
 					}
+					/*else if ( max > 2 * minimumSupport && max2 > 2 * minimumSupport ) 
+					{
+						int bubbleRet = IsSimpleBubble( i, maxtag, max2tag ) ;
+						if ( bubbleRet == max2tag && 
+							geneBlockGraph[i][max2tag].support[ geneBlockGraph[i][max2tag].supportUse ].IsUnique() )
+						{
+							max = max2 ;
+							maxtag = max2tag ;
+
+							max2 = 0 ;
+							max2tag = -1 ;
+						}
+					}*/
+
 					if ( max > 0 && max2 > 0 && ( !IsSignificantDifferent( max, fragLength - 2 * readLength, max2, fragLength - 2 * readLength )
 								) )//|| ( max > 100 && max2 > 100 ) ) )
 					{
@@ -1597,7 +1631,7 @@ class Blocks
 						{
 							struct _geneBlockBubble bb ;
 							bb.u = i ;
-							if ( bubbleRet == max2tag )
+							if ( bubbleRet == max2tag && max2 >= minimumSupport )
 							{
 								max = max2 ;
 								maxtag = max2tag ;
@@ -1622,7 +1656,7 @@ class Blocks
 					//	valid = false ;
 #ifdef DEBUG
 					if ( i == DEBUG_U ) //geneBlockGraph[i][j].v == 583 )
-						printf( "ambiguous test: %d %d: %d\n", max, max2, valid ) ;
+						printf( "ambiguous test: %d(%d) %d(%d) %d(%d): %d\n", max, maxtag, max2, max2tag, maxAll, maxAllTag, valid ) ;
 #endif 
 
 					for ( j = 0 ; j < cnt ; ++j )
@@ -1828,17 +1862,53 @@ class Blocks
 					{
 						int su = geneBlocks[i].support.GetStrand() ;
 						int sv = geneBlocks[v].support.GetStrand() ;
+						//printf( "%d %d: %d %d\n", i, v, su, sv ) ;
 						int supportUse = geneBlockGraph[i][j].supportUse ;
 
 						if ( su == sv && ( supportUse == 0 || supportUse == 3 ) )
 							valid = false ;
 						else if ( su != sv && ( supportUse == 1 || supportUse == 2 ) )
 							valid = false ;
+
+						if ( valid == false )
+						{
+							int su = geneBlockGraph[i][j].supportUse ; // different from the su, sv in the outer loop
+							int span = GetGeneBlockEffectiveCoverage(i, geneBlockGraph[i][j].support[su].GetLeftMostPos()
+							              	,geneBlockGraph[i][j].support[su].GetRightMostPos() ) ;
+
+							if ( span >= 100 && geneBlockGraph[i][j].support[su].GetCount() > 10 && geneBlockGraph[i][j].support[ su ].IsUnique() )
+							{
+								// Check whether the support's strand is defined.
+								int cnt = geneBlockGraph[v].size() ;
+								bool hasStrandSupportI = true ;
+								bool hasStrandSupportV = true ;
+								hasStrandSupportI = geneBlockGraph[i][j].support[ su ].HasStrandSupport() ;
+
+								for ( k = 0 ; k < cnt ; ++k )
+								{
+									if ( geneBlockGraph[v][k].v == i )
+									{
+										int su = geneBlockGraph[v][k].supportUse ;
+										int tmp = ( su >> 1 ) | ( ( su & 1 ) << 1 ) ;
+										if ( tmp == geneBlockGraph[i][j].supportUse )
+										{
+											hasStrandSupportV = geneBlockGraph[v][k].support[ su ].HasStrandSupport() ;
+											break ;
+										}
+										else
+											k = cnt ;
+									}
+								}
+
+								if ( !hasStrandSupportI || !hasStrandSupportV )
+									valid = true ;
+							}
+						}
 					}
 
 #ifdef DEBUG
 					if ( i == DEBUG_U && geneBlockGraph[i][j].v == DEBUG_V )
-						printf( "5: %d\n", valid ) ;
+						printf( "5: %d: %d %lf %lf\n", valid, geneBlocks[i].support.GetStrand(), geneBlocks[i].support.plusSupport, geneBlocks[i].support.minusSupport ) ;
 #endif
 
 					// TODO: a better way to decide this threshold
@@ -1853,12 +1923,12 @@ class Blocks
 						  {
 						  printf( "%d %d: %lf\n", i, geneBlockGraph[i][j].v, c ) ;
 						  }*/
-						if ( IsSignificantDifferent_SimpleTest( geneBlockInfo[i].a, geneBlockInfo[i].b, cnt, fragLength - 2 * readLength ) ||
+						if ( IsSignificantDifferent_SimpleTest( geneBlockInfo[i].a, geneBlockInfo[i].b, cnt, fragLength - 2 * readLength ) &&
 								IsSignificantDifferent_SimpleTest( geneBlockInfo[v].a, geneBlockInfo[v].b, cnt, fragLength - 2 * readLength ) )
 						{
 							//printf( "%lf\n", c) ;
 							//printf( "hi\n" ) ;
-							if ( !( cnt / ( fragLength - 2 * readLength ) > 10 && !geneBlockGraph[i][j].support[ su ].IsUnique() ) )
+							if ( !( cnt / ( fragLength - 2 * readLength ) > 2 && !geneBlockGraph[i][j].support[ su ].IsUnique() ) )
 								valid = false ;
 						}
 					}
@@ -1913,7 +1983,7 @@ class Blocks
 						if ( span > leni )
 							span = leni ;
 
-						if ( ( kmerCoverage > int( 1.5 * kmerSize ) && ( !geneBlockGraph[i][j].support[ su ].IsUnique() ) ) || 
+						if ( ( kmerCoverage >= (int)( 1.5 * kmerSize ) && ( !geneBlockGraph[i][j].support[ su ].IsUnique() ) ) || 
 							( kmerCoverage >= kmerSize + 2 && ( kmerCoverage > 0.1 * leni || kmerCoverage > 0.1 * lenj || kmerCoverage > 30 * span / readLength ) ) )
 						{
 							valid = false ;
@@ -2068,6 +2138,7 @@ class Blocks
 				{
 					k = geneBlockGraph[i].size() ;
 					int cnt[2] = {0, 0} ;
+					int uniqueExtension = 0 ;
 					for ( j = 0 ; j < k ; ++j )
 					{
 						if ( geneBlockGraph[i][j].valid == false )
@@ -2079,10 +2150,13 @@ class Blocks
 							++cnt[1] ;
 						else
 							++cnt[0] ;
+
+						//if ( geneBlockGraph[i][j].support[ geneBlockGraph[i][j].supportUse ].IsUnique() )
+						//	++uniqueExtension ;
 					}
 					//if ( i == 10746 || i == 10745 )
 					//	printf( "%d %d %d\n", len, cnt[0], cnt[1] ) ;
-					if ( cnt[0] == 0 || cnt[1] == 0 )
+					if ( ( cnt[0] == 0 || cnt[1] == 0 ) ) //&& uniqueExtension != ( cnt[0] + cnt[1] ) )
 					{
 						geneBlockGraph[i].clear() ;
 						validGeneBlock[i] = false ;
@@ -2115,7 +2189,7 @@ class Blocks
 			}
 
 #ifdef DEBUG
-			printf( "11: validGeneBlock[i]=%d\n", validGeneBlock[ DEBUG_U ] ) ;
+			printf( "11: validGeneBlock[u]=%d validGeneBlock[v]=%d\n", validGeneBlock[ DEBUG_U ], validGeneBlock[ DEBUG_V ] ) ;
 #endif
 
 			// Clean up the graph

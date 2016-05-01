@@ -537,9 +537,42 @@ public:
 				else
 				{
 					//printf( "error: %d %d %d\n", contigIdu, contigIdv, s[j].support[ s[j].supportUse ].GetCount() ) ;
+					// Break the originally assignment if the support is about the same.
+					bool reported = false ;
+					if ( scaffoldNodes[ contigIdu ].neighbor[ dummyNodeu ] >= 0 )
+					{
+						struct _mateEdge &me = scaffoldNodes[ contigIdu ].mateEdges[ dummyNodeu ] ;
+						if ( !blocks.IsSignificantDifferent( me.support[ me.supportUse ].GetCount(), 100, s[j].support[ s[j].supportUse ].GetCount(), 100 ) &&
+							( me.support[ me.supportUse ].GetCount() < 20 || !me.support[ me.supportUse ].IsUnique() ) )
+						{
+							reported = true ;
+							scaffoldNodes[ contigIdu ].neighbor[ dummyNodeu ] = -2 ;
+							problematicMates.push_back( me ) ;
+						}
+					}
+					if ( scaffoldNodes[ contigIdv ].neighbor[ dummyNodev ] >= 0 )
+					{
+						struct _mateEdge &me = scaffoldNodes[ contigIdv ].mateEdges[ dummyNodev ] ;
+						if ( !blocks.IsSignificantDifferent( me.support[ me.supportUse ].GetCount(), 100, s[j].support[ s[j].supportUse ].GetCount(), 100 ) &
+							( me.support[ me.supportUse ].GetCount() < 20 || !me.support[ me.supportUse ].IsUnique() ) )
+						{
+							scaffoldNodes[ contigIdv ].neighbor[ dummyNodev ] = -2 ;
+							if ( !reported )
+								problematicMates.push_back( me ) ;
+						}
+					}
+
 					problematicMates.push_back( s[j] ) ;
 				}
 			}
+		}
+
+		for ( i = 0 ; i < contigCnt ; ++i )
+		{
+			if ( scaffoldNodes[i].neighbor[0] < -1 )
+				scaffoldNodes[i].neighbor[0] = -1 ;
+			if ( scaffoldNodes[i].neighbor[1] < -1 )
+				scaffoldNodes[i].neighbor[1] = -1 ;
 		}
 
 		// Remove cycle.

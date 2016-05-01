@@ -19,7 +19,8 @@ char usage[] = "usage: a.out [options]\n"
 	       "\t-bc STRING: the path to the alignment BAM file allowing clipping from non-spliced aligner (default: not used)\n"
 	       "\t-ms INT: minimum support for connecting two contigs(default: 2)\n"
 	       "\t-ml INT: minimum exonic length(default: 200)\n"
-	       "\t-breakN INT: the least number of Ns to break a scaffold in the raw assembly(default: 1)\n"
+	       "\t-breakN INT: the least number of Ns to break a scaffold in the raw assembly (default: 1)\n"
+	       //"\t-minContigSize INT: the minimum length of a contig that can break a gene block. (default:200)"
 	       "\t-k INT: the size of a kmer(<=32; <=0 if you do not want to use kmer. default: 32)\n"
 	       "\t-cs : output the genomic sequence involved in connections in file $prefix_cs.fa (default: not used)\n"
 	       //"\t-aggressive: make connection decisions more aggressively, may introduce much more misassemblies. (default: not used)\n"
@@ -34,6 +35,7 @@ char *prefix ;
 bool VERBOSE ;
 FILE *fpOut ;
 int breakN ;
+int minContigSize ;
 
 int main( int argc, char *argv[] )
 {
@@ -54,8 +56,9 @@ int main( int argc, char *argv[] )
 
 	minimumSupport = 2 ;
 	minimumEffectiveLength = 200 ;
-	kmerSize = 32 ;
+	kmerSize = 23 ;
 	breakN = 1 ;
+	minContigSize = 200 ;
 	prefix = NULL ;
 	VERBOSE = false ;
 	outputConnectionSequence = false ;
@@ -96,6 +99,11 @@ int main( int argc, char *argv[] )
 		else if ( !strcmp( "-breakN", argv[i] ) )
 		{
 			breakN = atoi( argv[i + 1] ) ;
+			++i ;
+		}
+		else if ( !strcmp( "-minContigSize", argv[i] ) )
+		{
+			minContigSize = atoi( argv[i + 1] ) ;
 			++i ;
 		}
 		else if ( !strcmp( "-v", argv[i] ) )
@@ -176,7 +184,7 @@ int main( int argc, char *argv[] )
 	blocks.GetAlignmentsInfo( alignments ) ;
 	alignments.Rewind() ;
 
-	ret = blocks.BuildGeneBlocks( alignments ) ;
+	ret = blocks.BuildGeneBlocks( alignments, genome ) ;
 	alignments.Rewind() ;
 	fprintf( stderr, "Found %d gene blocks.\n", ret ) ;
 	

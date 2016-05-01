@@ -21,6 +21,7 @@ private:
 	bool opened ;	
 	std::map<std::string, int> chrNameToId ;
 	bool allowSupplementary ;
+	double strandWeight ; // the weight of this alignment when considering strand.
 
 	void Open()
 	{
@@ -54,6 +55,7 @@ public:
 
 	void Rewind()
 	{
+		strandWeight = 1 ;
 		Close() ;
 		Open() ;
 	}
@@ -74,6 +76,7 @@ public:
 		int i ;
 		int start = 0, len = 0 ;
 		uint32_t *rawCigar ;
+		strandWeight = 1 ;
 
 		while ( 1 )
 		{
@@ -162,6 +165,11 @@ public:
 				segments[ segCnt ].b = start + len - 1 ;
 				++segCnt ;
 			}
+
+			// Check whether there is very short segment
+			/*if ( ( segments[0].b - segments[0].a + 1 <= 3 || 
+				segments[ segCnt - 1].b - segments[ segCnt - 1].a + 1 <= 3 ) && !IsUnique() )
+				continue ;*/
 
 			/*for ( i = 0 ; i < segCnt ; ++i )
 			  printf( "(%d %d) ", segments[i].a, segments[i].b ) ;
@@ -315,6 +323,15 @@ public:
 	void SetAllowSupplementary( bool in )
 	{ 
 		allowSupplementary = in ;
+	}
+
+	void SetStrandWeight( double in )
+	{
+		strandWeight = in ;
+	}
+	double GetStrandWeight()
+	{
+		return strandWeight ;
 	}
 } ;
 #endif
