@@ -66,8 +66,21 @@ public:
 		else if ( strand == -1 )
 			minusSupport += align.GetStrandWeight() ;
 		int nm = align.GetFieldI( "NM" ) ;
-		if ( nm >= 0 )
+		if ( nm > 0 )
+		{
+			// Check the whether it aligns to Ns.
+			/*char *md = align.GetFieldZ( "MD" ) ;	
+			if ( md != NULL )
+			{
+				int i ;
+				for ( i = 0 ; md[i] ; ++i )
+				{
+					if ( md[i] == '0' && md[i + 1] == 'N' )
+						--nm ;
+				}
+			}*/
 			nmSum += nm ;
+		}
 
 		if ( !ignoreCoord )
 		{
