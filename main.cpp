@@ -21,7 +21,7 @@ char usage[] = "usage: a.out [options]\n"
 	       "\t-ml INT: minimum exonic length(default: 200)\n"
 	       "\t-breakN INT: the least number of Ns to break a scaffold in the raw assembly (default: 1)\n"
 	       //"\t-minContigSize INT: the minimum length of a contig that can break a gene block. (default:200)"
-	       "\t-k INT: the size of a kmer(<=32; <=0 if you do not want to use kmer. default: 32)\n"
+	       "\t-k INT: the size of a kmer(<=32; <=0 if you do not want to use kmer. default: 23)\n"
 	       "\t-cs : output the genomic sequence involved in connections in file $prefix_cs.fa (default: not used)\n"
 	       //"\t-aggressive: make connection decisions more aggressively, may introduce much more misassemblies. (default: not used)\n"
 	       "\t-v : verbose mode (default: false)\n" ;
