@@ -3,7 +3,7 @@ Rascaf
 
 Described in: 
  
-Song, L., Shankar, D. and Florea, L. "Rascaf: Improving Genome Assembly with RNA-seq Data", Plant and Animal Genome XXIV (PAG-2015) Conference; manuscript in preparation.
+Song, L., Shankar, D. and Florea, L. "Rascaf: Improving Genome Assembly with RNA-seq Data", The Plant Genome, 2016. doi: 10.3835/plantgenome2016.03.0027.
 
 Copyright (C) 2015-2016, and GNU GPL, by Li Song, Liliana Florea
 
