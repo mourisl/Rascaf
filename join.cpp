@@ -518,7 +518,7 @@ int main( int argc, char *argv[] )
 	}
 	//delete[] isInCycle ;
 	//printf( "hi: %d %d\n", __LINE__, contigCnt ) ;
-	//printf( "%d %d\n", contigGraph.GetNeighbors( 15301, 0, neighbors, MAX_NEIGHBOR ), contigGraph.GetNeighbors( 15301, 1, neighbors, MAX_NEIGHBOR ) ) ;
+	//printf( "%d %d\n", contigGraph.GetNeighbors( 0, 0, neighbors, MAX_NEIGHBOR ), contigGraph.GetNeighbors( 0, 1, neighbors, MAX_NEIGHBOR ) ) ;
 	// Sort the scaffolds from fasta file, so that longer scaffold come first
 	int scafCnt = genome.GetChrCount() ;
 	struct _pair *scafInfo = new struct _pair[scafCnt] ;
@@ -544,6 +544,7 @@ int main( int argc, char *argv[] )
 	int *counter = new int[contigCnt] ;
 	int *visitDummy = new int[ contigCnt ] ;
 	int *buffer = new int[contigCnt] ;
+	int *buffer2 = new int[contigCnt] ;
 	bool *isInQueue = new bool[ contigCnt ] ;
 	int *chosen = new int[contigCnt] ;
 	int chosenCnt ;
@@ -557,6 +558,8 @@ int main( int argc, char *argv[] )
 	for ( i = 0 ; i < scafCnt ; ++i )
 	{
 		int from, to ;
+		if ( scafInfo[i].a == -1 )
+			continue ;
 		genome.GetChrContigRange( genome.GetChrIdFromContigId( scafInfo[i].a ), from, to ) ;
 		ForwardSearch( from, 0, i, visitTime, counter, visitDummy, contigGraph ) ;
 		chosenCnt = 0 ;
@@ -623,6 +626,8 @@ int main( int argc, char *argv[] )
 	{
 		//if ( used[144281] == true )
 		//	printf( "changed %d %d\n", i, scafInfo[i - 1].a ) ;
+		if ( scafInfo[i].a == -1 )
+			continue ;
 		int from, to ;
 		genome.GetChrContigRange( genome.GetChrIdFromContigId( scafInfo[i].a ), from, to ) ;
 		//printf( "%d: %d %d %d\n", i, scafInfo[i].b, from, to ) ;
@@ -692,8 +697,8 @@ int main( int argc, char *argv[] )
 		queue[0].b = 0 ;
 		tail = 1 ;
 		int prevTag = -1 ;
-		int *prevAdd = counter ; // reuse counter to save some memory.
-		int *nextAdd = buffer ;
+		int *prevAdd = buffer ; // reuse counter to save some memory.
+		int *nextAdd = buffer2 ;
 		int firstAdd = -1 ;
 
 		while ( head < tail )
@@ -804,17 +809,17 @@ int main( int argc, char *argv[] )
 			//if ( j < tail - 1 ) 
 			//	continue ;
 			chosenCnt = 0 ;
-			//if ( queue[j].a == 306 )
+			//if ( queue[j].a == 0 )
 			//	printf( "Dummy: %d %d %d\n", j, queue[j].b, 1 - queue[j].b ) ;
 			SearchDangling( queue[j].a, queue[j].b, used, danglingTime, danglingVisitTime, contigGraph, false, chosen, chosenDummy, chosenCnt, genome ) ;
 			++danglingTime ;
 			int prevTag = prevAdd[j] ;
-			/*if ( queue[j].a == 34674 )
+			/*if ( queue[j].a == 0 )
 			{
 				struct _pair neighbors[5] ;
 				int ncnt = contigGraph.GetNeighbors( queue[j].a, 1 - queue[j].b, neighbors, 5 ) ;
 				printf( "%d %d %d %d: %d %d\n", queue[j].b, chosenCnt, prevTag, ncnt, neighbors[0].a, used[ neighbors[0].a ] ) ;
-			}*/
+			}*/	
 			if ( prevTag == -1 )
 				break ;
 
@@ -924,7 +929,7 @@ int main( int argc, char *argv[] )
 		}
 	}
 	//return 0 ;
-
+	
 	// Output the scaffold
 	int id = 0 ;
 	char infoFileName[512] ;
@@ -1005,6 +1010,7 @@ int main( int argc, char *argv[] )
 	fclose( infoFile ) ;
 
 	delete[] buffer ;
+	delete[] buffer2 ;
 	delete[] chosen ;
 	delete[] queue ;
 	delete[] counter ;

@@ -11,7 +11,7 @@
 #include "scaffold.hpp"
 #include "genome.hpp"
 
-char usage[] = "usage: a.out [options]\n"
+char usage[] = "usage: rascaf [options]\n"
 	       "options:\n"
 	       "\t-b STRING (required): the path to the alignment BAM file\n"
 	       "\t-f STRING (recommended): the paths to the raw assembly fasta file(default: not used)\n"
