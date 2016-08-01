@@ -108,6 +108,9 @@ We provide a sample bam file and assembly file in "sample" sub-directory.
 
 You could see the connection between chr20_10 and chr20_11 from rascaf.out or sample.info. And the scaffolded sequence is in sample.fa
 
+### Miscellaneous
+You can also use ">perl rascaf-wrapper.pl" and use "-b" to specify alignment files. The wrapper runs "rascaf" and "rascaf-join" internally.
+
 ### Terms of use
 
 This program is free software; you can redistribute it and/or modify it
