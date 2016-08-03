@@ -189,7 +189,10 @@ int main( int argc, char *argv[] )
 	fprintf( stderr, "Found %d gene blocks.\n", ret ) ;
 	
 	blocks.BuildGeneBlockGraph( alignments ) ;
-	blocks.AddGeneBlockGraphByClippedAlignments( clippedAlignments ) ; 
+	if ( clippedAlignments.IsOpened() )
+	{
+		blocks.AddGeneBlockGraphByClippedAlignments( clippedAlignments ) ; 
+	}
 	
 	// Cleaning
 	blocks.CleanGeneBlockGraph( alignments, genome ) ;
