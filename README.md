@@ -28,7 +28,7 @@ For "rascaf":
 	Usage: ./rascaf [OPTIONS]
 	OPTIONS:
 	Required:
-		-b STRING: path to the BAM file for the alignment	
+		-b STRING: path to the coordinate-sorted BAM file for the alignment. 	
 	Recommended:
 		-f STRING: path to the raw assembly fasta file
 	Others:
