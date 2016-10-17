@@ -13,7 +13,7 @@
 
 char usage[] = "usage: rascaf [options]\n"
 	       "options:\n"
-	       "\t-b STRING (required): the path to the alignment BAM file\n"
+	       "\t-b STRING (required): the path to the coordinate-sorted alignment BAM file\n"
 	       "\t-f STRING (recommended): the paths to the raw assembly fasta file(default: not used)\n"
 	       "\t-o STRING : prefix of the output file (default: rascaf)\n"
 	       "\t-bc STRING: the path to the alignment BAM file allowing clipping from non-spliced aligner (default: not used)\n"
