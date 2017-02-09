@@ -52,8 +52,8 @@ for ( my $i = 0 ; $i < scalar( @ARGV ) ; ++$i )
 	}
 	elsif ( $ARGV[ $i ] eq "-o" )
 	{
-		push @rascafARGV, $ARGV[$i] ;
-		push @rascafARGV, $ARGV[$i + 1] ;
+		#push @rascafARGV, $ARGV[$i] ;
+		#push @rascafARGV, $ARGV[$i + 1] ;
 
 		push @rascafJoinARGV, $ARGV[$i] ;
 		push @rascafJoinARGV, $ARGV[$i + 1] ;
