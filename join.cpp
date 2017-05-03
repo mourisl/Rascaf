@@ -343,7 +343,7 @@ int main( int argc, char *argv[] )
 			p += 2 ;
 			while ( *p == ' ' )
 				++p ;
-			for ( i = 0 ; *p && *p != ' ' ; ++p, ++i )
+			for ( i = 0 ; *p && *p != ' ' && *p != '\n' ; ++p, ++i )
 				buffer[i] = *p ;
 			buffer[i] = '\0' ;
 			alignments.Open( buffer ) ;
@@ -436,6 +436,7 @@ int main( int argc, char *argv[] )
 	{
 		genome.SetIsOpen( contigLevel ) ;
 	}
+	fprintf( stderr, "Finish reading the rascaf output files.\n" ) ;
 
 	// Build the graph
 	int contigCnt = genome.GetContigCount() ;
@@ -590,6 +591,8 @@ int main( int argc, char *argv[] )
 			}
 		}
 	}
+
+	fprintf( stderr, "Finish removing cycles in the graph.\n" ) ;
 
 
 	memset( used, false, sizeof( bool ) * contigCnt ) ;
@@ -929,6 +932,7 @@ int main( int argc, char *argv[] )
 		}
 	}
 	//return 0 ;
+	fprintf( stderr, "Finish ordering the scaffolds.\n" ) ;
 	
 	// Output the scaffold
 	int id = 0 ;
