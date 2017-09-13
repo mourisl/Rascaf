@@ -391,10 +391,16 @@ int main( int argc, char *argv[] )
 
 			if ( !strcmp( line, "WARNINGS:\n" ) )
 				break ;
-
+			
 			std::vector<struct _part> nparts  ;
+			
 			if ( line[0] >= '0' && line[0] <= '9' )
 			{
+				for ( i = 0 ; line[i] >= '0' && line[i] <= '9' ; ++i )
+					;
+				if ( line[i] != ':' )
+					continue ;
+				
 				AddConnection( line, alignments, nparts ) ;
 				connects.push_back( nparts ) ;
 				tag = 0 ;
@@ -407,6 +413,10 @@ int main( int argc, char *argv[] )
 					;
 				for ( ; line[i] >= '0' && line[i] <= '9' ; ++i )
 					num = num * 10 + line[i] - '0' ;
+
+				if ( line[i] != ':' ) // the format does not match
+					continue ;
+
 				++tag ;
 				if ( num < minSupport )
 				{
@@ -454,6 +464,7 @@ int main( int argc, char *argv[] )
 			contigGraph.AddEdge( i, 1, i + 1, 0 ) ;
 		}
 	}
+	struct _pair *neighbors = new struct _pair[ MAX_NEIGHBOR ] ;
 	for ( i = 0 ; i < csize ; ++i )	
 	{
 		std::vector<struct _part> &parts = connects[i] ;
@@ -470,14 +481,13 @@ int main( int argc, char *argv[] )
 				dummyU = 1 ;
 			if ( b.strand == '-' )
 				dummyV = 1 ;
+			
 			contigGraph.AddEdge( a.contigId, dummyU, b.contigId, dummyV, true ) ;
 		}
 	}
 
 	// Check the cycles in the contig graph. This may introduces when combining different rascaf outputs.
 	int *visitTime = new int[contigCnt] ;
-	struct _pair *neighbors = new struct _pair[ MAX_NEIGHBOR ] ;
-
 	bool *isInCycle = new bool[contigCnt] ;
 	std::vector<int> cycleNodes ;
 	memset( visitTime, -1, sizeof( int ) * contigCnt ) ;
@@ -519,7 +529,7 @@ int main( int argc, char *argv[] )
 	}
 	//delete[] isInCycle ;
 	//printf( "hi: %d %d\n", __LINE__, contigCnt ) ;
-	//printf( "%d %d\n", contigGraph.GetNeighbors( 0, 0, neighbors, MAX_NEIGHBOR ), contigGraph.GetNeighbors( 0, 1, neighbors, MAX_NEIGHBOR ) ) ;
+	//printf( "%d %d\n", contigGraph.GetNeighbors( 163558, 0, neighbors, MAX_NEIGHBOR ), contigGraph.GetNeighbors( 163558, 1, neighbors, MAX_NEIGHBOR ) ) ;
 	// Sort the scaffolds from fasta file, so that longer scaffold come first
 	int scafCnt = genome.GetChrCount() ;
 	struct _pair *scafInfo = new struct _pair[scafCnt] ;
@@ -534,7 +544,6 @@ int main( int argc, char *argv[] )
 		}
 	}
 	qsort( scafInfo, scafCnt, sizeof( struct _pair ), CompScaffold ) ;
-
 	// Merge the branches and build the scaffold
 	ContigGraph scaffold( contigCnt, 2 * contigCnt ) ;
 	

@@ -131,11 +131,12 @@ public:
 			segCnt = 0 ;
 			start = b->core.pos ; //+ 1 ;
 			rawCigar = bam1_cigar( b ) ; 
+			len = 0 ;
 			for ( i = 0 ; i < b->core.n_cigar ; ++i )
 			{
 				int op = rawCigar[i] & BAM_CIGAR_MASK ;
 				int num = rawCigar[i] >> BAM_CIGAR_SHIFT ;
-
+				
 				switch ( op )
 				{
 					case BAM_CMATCH:
