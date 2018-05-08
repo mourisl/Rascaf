@@ -11,10 +11,10 @@ open FP2, ">$prefix.fa" ;
 
 my @chrId ;
 my @chrLength ;
+<FP1> ;
 while ( <FP1> )
 {
-	last if ( /^command/ ) ;
-	next if ( !/^[0-9]/ ) ;
+	last if ( !/^[0-9]/ ) ;
 
 	my @cols = split ;
 	if ( scalar( @chrId ) == 0 || $chrId[-1] ne $cols[1] )
