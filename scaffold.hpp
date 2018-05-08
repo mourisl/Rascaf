@@ -266,6 +266,7 @@ public:
 			blockUsed.push_back( false ) ;
 		}
 		misassembledInfo = NULL ;
+		scaffoldNodes = NULL ;
 	} 
 	//Scaffold( ) {} 
 	~Scaffold() 
@@ -277,6 +278,9 @@ public:
 
 		if ( misassembledInfo != NULL )
 			delete[] misassembledInfo ;
+
+		if ( scaffoldNodes != NULL )
+			delete[] scaffoldNodes ;
 	}
 	
 	int BuildComponent()	
@@ -584,7 +588,7 @@ public:
 		{
 			if ( scaffoldNodes[i].neighbor[0] != -1 )
 				++edgeCnt ;
-			if ( scaffoldNodes[i + 1].neighbor[1] != -1 )
+			if ( i + 1 < contigCnt && scaffoldNodes[i + 1].neighbor[1] != -1 )
 				++edgeCnt ;
 		}
 		ContigGraph contigGraph( contigCnt, contigCnt + edgeCnt ) ;

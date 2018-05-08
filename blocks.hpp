@@ -190,6 +190,7 @@ class Blocks
 		Blocks() { geneBlockGraph = NULL ; } 	
 		~Blocks() 
 		{
+			delete[] repeatFather ;
 			if ( geneBlockGraph != NULL )
 				delete[] geneBlockGraph ;
 		}

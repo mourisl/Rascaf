@@ -45,7 +45,11 @@ public:
 	unsigned int segCnt ;
 
 	Alignments() { b = NULL ; opened = false ; allowSupplementary = false ;}
-	~Alignments() {}
+	~Alignments() 
+	{
+		if ( b )
+			bam_destroy1( b ) ;
+	}
 
 	void Open( char *file )
 	{

@@ -108,6 +108,12 @@ public:
 		return numToNuc[ ( ( sequence[ind] >> ( 2 * offset ) ) & 3 ) ] ;
 	}
 
+	void Release()
+	{
+		if ( sequence != NULL ) 
+			delete[] sequence ;
+	}
+
 	void Print()
 	{
 		int i ;
@@ -153,7 +159,13 @@ private:
 
 public:
 	Genome() { isOpen = false ;}
-	~Genome() {}
+	~Genome() 
+	{
+		int size = genomes.size() ;
+		int i ;
+		for ( i = 0 ; i < size ; ++i )
+			genomes[i].Release() ;
+	}
 
 	void Open( Alignments &alignments, char *fa )
 	{

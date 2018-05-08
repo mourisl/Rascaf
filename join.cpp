@@ -527,7 +527,7 @@ int main( int argc, char *argv[] )
 			}
 		}
 	}
-	//delete[] isInCycle ;
+	
 	//printf( "hi: %d %d\n", __LINE__, contigCnt ) ;
 	//printf( "%d %d\n", contigGraph.GetNeighbors( 163558, 0, neighbors, MAX_NEIGHBOR ), contigGraph.GetNeighbors( 163558, 1, neighbors, MAX_NEIGHBOR ) ) ;
 	// Sort the scaffolds from fasta file, so that longer scaffold come first
@@ -600,7 +600,7 @@ int main( int argc, char *argv[] )
 			}
 		}
 	}
-
+	delete[] isInCycle ;
 	fprintf( stderr, "Finish removing cycles in the graph.\n" ) ;
 
 
@@ -1028,10 +1028,14 @@ int main( int argc, char *argv[] )
 	delete[] queue ;
 	delete[] counter ;
 	delete[] visitTime ;
+	delete[] danglingVisitTime ;
+	delete[] visitDummy ;
 	delete[] used ;
 	delete[] scafInfo ;
 	delete[] isInQueue ;
 	delete[] gapSize ;
+	delete[] degree ;
+	delete[] neighbors ;
 
 	//fclose( rascafFile ) ;
 	return 0 ;
