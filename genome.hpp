@@ -35,14 +35,16 @@ class BitSequence
 {
 private:
 	int len ;
+	int maxLen ;
 	//std::vector<uint32_t> sequence ;
 	uint32_t *sequence ;
 
 public:
-	BitSequence() { len = 0 ; sequence = NULL ;} 
+	BitSequence() { len = 0 ; maxLen = -1 ; sequence = NULL ;} 
 	BitSequence( int l )
 	{
 		len = 0 ;
+		maxLen = l ;
 		sequence = new uint32_t[ l / 16 + 1 ] ;
 	}
 	
@@ -59,12 +61,16 @@ public:
 
 	void Append( char c )
 	{
+		if ( maxLen > 0 && len >= maxLen )
+		{
+			fprintf( stderr, "The contig length from BAM file is different from the fasta file.\n" ) ;	
+			exit( 1 ) ;
+		}
 		if ( ( len & 15 ) == 0 )
 		{
 			sequence[ len / 16 ] = 0 ;
 		}
 		++len ;
-		//printf( "%d %c\n", len, c ) ;
 		Set( c, len - 1 ) ;
 	}
 	
@@ -254,7 +260,6 @@ public:
 						bs.Append( line[i] ) ;
 						//if ( line[i] != 'N' )
 						//	printf( "%c %c\n", line[i], bs.Get(i) ) ;
-
 						if ( line[i] == 'n' || line[i] == 'N' )
 						{
 							/*if ( tmpContig.start != -1 )
@@ -340,6 +345,16 @@ public:
 
 		fp.close() ;
 		isOpen = true ;
+
+		// Check whether the genome size from fasta is the same as in the BAM file.
+		for ( int i = 0 ; i <= chrId ; ++i )
+		{
+			if ( genomes[i].GetLength() > 0 && genomes[i].GetLength() != alignments.GetChromLength( i ) )
+			{
+				fprintf( stderr, "The contig length from BAM file is different from the fasta file.\n" ) ;
+				exit( 1 ) ;
+			}
+		}
 		
 		if ( fpOut != NULL )
 		{

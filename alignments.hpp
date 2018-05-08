@@ -213,7 +213,7 @@ public:
 		std::string ss( s ) ;
 		if ( chrNameToId.find( ss ) == chrNameToId.end() )
 		{
-			printf( "Unknown genome name: %s\n", s ) ;
+			fprintf( stderr, "Unknown genome name: %s\n", s ) ;
 			exit( 1 ) ;
 		}
 		return chrNameToId[ss] ;
