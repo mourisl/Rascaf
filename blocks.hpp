@@ -187,10 +187,11 @@ class Blocks
 		int fragLength ;
 		int fragStd ;
 
-		Blocks() { geneBlockGraph = NULL ; } 	
+		Blocks() { geneBlockGraph = NULL ; repeatFather = NULL ; } 	
 		~Blocks() 
 		{
-			delete[] repeatFather ;
+			if ( repeatFather != NULL )
+				delete[] repeatFather ;
 			if ( geneBlockGraph != NULL )
 				delete[] geneBlockGraph ;
 		}

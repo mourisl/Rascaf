@@ -68,6 +68,9 @@ public:
 	{
 		samclose( fpSam ) ;
 		fpSam = NULL ;
+		if ( b )
+			bam_destroy1( b ) ;
+		b = NULL ;
 	}
 
 	bool IsOpened()
