@@ -134,7 +134,7 @@ int main( int argc, char *argv[] )
 
 	if ( !alignments.IsOpened() )
 	{
-		printf( "Must use -b to specify the bam file." ) ;
+		printf( "Must use -b to specify the bam file.\n" ) ;
 		return 0 ;
 	}
 

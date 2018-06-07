@@ -8,6 +8,7 @@
 #include <string>
 #include <assert.h>
 #include <iostream>
+#include <stdio.h>
 
 #include "defs.h"
 
@@ -25,6 +26,14 @@ private:
 
 	void Open()
 	{
+		FILE *fptmp = fopen( fileName, "r" ) ;
+		if ( !fptmp )
+		{
+			fprintf( stderr, "Can not open %s.\n", fileName ) ;
+			exit( 1 ) ;
+		}
+		fclose( fptmp ) ;
+
 		fpSam = samopen( fileName, "rb", 0 ) ;
 		if ( !fpSam->header )
 		{

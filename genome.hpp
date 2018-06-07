@@ -171,6 +171,11 @@ public:
 	{
 		std::ifstream fp ;	
 		fp.open( fa ) ;
+		if ( fp.fail() )
+		{
+			fprintf( stderr, "Can no open %s.\n", fa ) ;
+			exit( 1 ) ;
+		}
 		std::string line ;
 		int chrId = -1 ;
 		std::string s( "" ) ;
