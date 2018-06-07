@@ -68,6 +68,11 @@ int main( int argc, char *argv[] )
 	{
 		if ( !strcmp( "-b", argv[i] ) )
 		{
+			if ( i + 1 >= argc )
+			{
+				fprintf( stderr, "-b misses arguments.\n" ) ;
+				exit( 1 ) ;
+			}
 			alignments.Open( argv[i + 1]) ;
 			++i ;
 		}
@@ -130,6 +135,11 @@ int main( int argc, char *argv[] )
 			fprintf( stderr, "Unknown parameter: %s\n", argv[i] ) ;
 			exit( 1 ) ;
 		}
+	}
+	if ( i > argc )
+	{
+		fprintf( stderr, "%s misses arguments.\n", argv[ argc - 1] ) ;
+		exit( 1 ) ;
 	}
 
 	if ( !alignments.IsOpened() )
