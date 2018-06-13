@@ -322,10 +322,10 @@ int main( int argc, char *argv[] )
 			char *p ;
 			char buffer[512] ;
 
-			p = strstr( line, "-breakN" ) ;
+			p = strstr( line, " -breakN " ) ;
 			if ( p != NULL )
 			{
-				p += 7 ;
+				p += 8 ;
 				while ( *p == ' ' )
 					++p ;
 				for ( i = 0 ; *p && *p != ' ' ; ++p, ++i )
@@ -334,13 +334,13 @@ int main( int argc, char *argv[] )
 				breakN = atoi( buffer ) ;
 			}
 
-			p = strstr( line, "-b" ) ;
+			p = strstr( line, " -b " ) ;
 			if ( p == NULL )
 			{
 				fprintf( stderr, "Could not find the bam file specified by -b in Rascaf.\n" ) ;
 				exit( 1 ) ;
 			}
-			p += 2 ;
+			p += 3 ;
 			while ( *p == ' ' )
 				++p ;
 			for ( i = 0 ; *p && *p != ' ' && *p != '\n' ; ++p, ++i )
@@ -348,13 +348,13 @@ int main( int argc, char *argv[] )
 			buffer[i] = '\0' ;
 			alignments.Open( buffer ) ;
 
-			p = strstr( line, "-f") ;
+			p = strstr( line, " -f " ) ;
 			if ( p == NULL )
 			{
 				fprintf( stderr, "Could not find the raw assembly file specified by -f in Rascaf.\n" ) ;
 				exit( 1 ) ;
 			}
-			p += 2 ;
+			p += 3 ;
 			while ( *p == ' ' )
 				++p ;
 			for ( i = 0 ; *p && *p != ' ' && *p != '\n' ; ++p, ++i )
