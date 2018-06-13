@@ -260,7 +260,7 @@ int main( int argc, char *argv[] )
 	Genome genome ;
 	std::vector<int> rascafFileId ; 
 	
-	char line[2048] ;
+	char line[4096] ;
 	char prefix[512] = "rascaf_scaffold" ;
 	int rawAssemblyInd = 1 ;
 	FILE *rascafFile ;
@@ -268,6 +268,10 @@ int main( int argc, char *argv[] )
 	int i ;
 	FILE *outputFile ;
 	FILE *infoFile ;
+	
+	char infoFileName[512] ;
+	char outputFileName[512] ;
+	char fullpathBuffer[4096] ;
 
 	breakN = 1 ;
 
@@ -313,6 +317,9 @@ int main( int argc, char *argv[] )
 	
 	MAX_NEIGHBOR = 1 + rascafFileId.size() ;
 	
+	sprintf( infoFileName, "%s.info", prefix ) ;
+	sprintf( outputFileName, "%s.fa", prefix ) ;
+	
 	// Get the bam file.
 	rascafFile = fopen( argv[ rascafFileId[0] ], "r" ) ;
 	while ( fgets( line, sizeof( line ), rascafFile ) != NULL ) 
@@ -320,7 +327,7 @@ int main( int argc, char *argv[] )
 		if ( strstr( line, "command line:" ) )
 		{
 			char *p ;
-			char buffer[512] ;
+			char buffer[4096] ;
 
 			p = strstr( line, " -breakN " ) ;
 			if ( p != NULL )
@@ -362,11 +369,27 @@ int main( int argc, char *argv[] )
 			buffer[i] = '\0' ;
 			fprintf( stderr, "Found raw assembly file: %s\n", buffer ) ;
 			genome.Open( alignments, buffer ) ;
+			strcpy( fullpathBuffer, buffer ) ;
 			
 			break ;
 		}
 	}
 	fclose( rascafFile ) ;
+
+	// Make sure the output fasta file would not overwrite the raw assembly fasta file
+
+	if ( realpath( outputFileName, line ) == NULL ) 
+	{
+		fprintf( stderr, "Failed to resolve the path of file %s.\n", argv[i] ) ;
+		exit( 1 ) ;
+	}
+	if ( !strcmp( line, fullpathBuffer ) )
+	{
+		fprintf( stderr, "Output fasta file will overwrite the raw assembly fasta file specified by -f from rascaf. Please use -o to specify a different prefix.\n" ) ;
+		exit( 1 ) ;
+	}
+
+
 	// Parse the input.
 	for ( unsigned int fid = 0 ; fid < rascafFileId.size() ; ++fid )
 	{
@@ -448,6 +471,7 @@ int main( int argc, char *argv[] )
 	}
 	fprintf( stderr, "Finish reading the rascaf output files.\n" ) ;
 
+	
 	// Build the graph
 	int contigCnt = genome.GetContigCount() ;
 	int edgeCnt = 0 ;
@@ -945,11 +969,6 @@ int main( int argc, char *argv[] )
 	
 	// Output the scaffold
 	int id = 0 ;
-	char infoFileName[512] ;
-	char outputFileName[512] ;
-	sprintf( infoFileName, "%s.info", prefix ) ;
-	sprintf( outputFileName, "%s.fa", prefix ) ;
-
 	outputFile = fopen( outputFileName, "w" ) ;
 	infoFile = fopen( infoFileName, "w") ;
 
