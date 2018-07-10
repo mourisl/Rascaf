@@ -377,16 +377,13 @@ int main( int argc, char *argv[] )
 	fclose( rascafFile ) ;
 
 	// Make sure the output fasta file would not overwrite the raw assembly fasta file
-
-	if ( realpath( outputFileName, line ) == NULL ) 
+	if ( realpath( outputFileName, line ) != NULL ) 
 	{
-		fprintf( stderr, "Failed to resolve the path of file %s.\n", argv[i] ) ;
-		exit( 1 ) ;
-	}
-	if ( !strcmp( line, fullpathBuffer ) )
-	{
-		fprintf( stderr, "Output fasta file will overwrite the raw assembly fasta file specified by -f from rascaf. Please use -o to specify a different prefix.\n" ) ;
-		exit( 1 ) ;
+		if ( !strcmp( line, fullpathBuffer ) )
+		{
+			fprintf( stderr, "Output fasta file will overwrite the raw assembly fasta file specified by -f from rascaf. Please use -o to specify a different prefix.\n" ) ;
+			exit( 1 ) ;
+		}
 	}
 
 
